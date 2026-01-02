@@ -3,6 +3,7 @@
 /build/
 /dist/
 /out/
+/spogo
 *.exe
 *.dll
 *.so

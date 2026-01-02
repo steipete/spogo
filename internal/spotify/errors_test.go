@@ -1,6 +1,7 @@
 package spotify
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -11,8 +12,8 @@ func TestAPIErrorFromResponse(t *testing.T) {
 	body := io.NopCloser(strings.NewReader(`{"error":{"status":401,"message":"bad"}}`))
 	resp := &http.Response{StatusCode: 401, Status: "401", Body: body}
 	err := apiErrorFromResponse(resp)
-	apiErr, ok := err.(APIError)
-	if !ok {
+	var apiErr APIError
+	if !errors.As(err, &apiErr) {
 		t.Fatalf("expected APIError")
 	}
 	if apiErr.Status != 401 || apiErr.Message != "bad" {

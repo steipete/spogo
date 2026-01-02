@@ -13,6 +13,11 @@ linters:
     - unused
     - misspell
     - prealloc
+    - bodyclose
+    - errorlint
+    - nilerr
+    - nilnil
+    - durationcheck
 
 linters-settings: {}
 
