@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/browserutils/kooky"
 	"github.com/steipete/spogo/internal/config"
 	"github.com/steipete/spogo/internal/cookies"
 	"github.com/steipete/spogo/internal/output"
 	"github.com/steipete/spogo/internal/testutil"
+	"github.com/steipete/sweetcookie"
 )
 
 func TestAuthStatusCmd(t *testing.T) {
@@ -45,8 +45,8 @@ func TestAuthStatusCmdMissingSPDC(t *testing.T) {
 
 func TestAuthStatusBrowserFallback(t *testing.T) {
 	ctx, _, _ := testutil.NewTestContext(t, output.FormatPlain)
-	restore := cookies.SetReadCookies(func(ctx context.Context, filters ...kooky.Filter) (kooky.Cookies, error) {
-		return kooky.Cookies{&kooky.Cookie{Cookie: http.Cookie{Name: "sp_dc", Value: "token", Domain: ".spotify.com"}}}, nil
+	restore := cookies.SetReadCookies(func(ctx context.Context, opts sweetcookie.Options) (sweetcookie.Result, error) {
+		return sweetcookie.Result{Cookies: []sweetcookie.Cookie{{Name: "sp_dc", Value: "token", Domain: ".spotify.com"}}}, nil
 	})
 	defer restore()
 	ctx.Profile.CookiePath = filepath.Join(t.TempDir(), "missing.json")
@@ -61,8 +61,8 @@ func TestAuthImportCmd(t *testing.T) {
 	ctx.Config = config.Default()
 	ctx.ConfigPath = filepath.Join(t.TempDir(), "config.toml")
 	ctx.ProfileKey = "default"
-	restore := cookies.SetReadCookies(func(ctx context.Context, filters ...kooky.Filter) (kooky.Cookies, error) {
-		return kooky.Cookies{&kooky.Cookie{Cookie: http.Cookie{Name: "sp_dc", Value: "token", Domain: ".spotify.com"}}}, nil
+	restore := cookies.SetReadCookies(func(ctx context.Context, opts sweetcookie.Options) (sweetcookie.Result, error) {
+		return sweetcookie.Result{Cookies: []sweetcookie.Cookie{{Name: "sp_dc", Value: "token", Domain: ".spotify.com"}}}, nil
 	})
 	defer restore()
 	path := filepath.Join(t.TempDir(), "cookies.json")
@@ -81,8 +81,8 @@ func TestAuthImportCmdDefaultPath(t *testing.T) {
 	ctx.ConfigPath = filepath.Join(t.TempDir(), "config.toml")
 	ctx.ProfileKey = "default"
 	ctx.Profile = config.Profile{Browser: "firefox", BrowserProfile: "Default"}
-	restore := cookies.SetReadCookies(func(ctx context.Context, filters ...kooky.Filter) (kooky.Cookies, error) {
-		return kooky.Cookies{&kooky.Cookie{Cookie: http.Cookie{Name: "sp_dc", Value: "token", Domain: ".spotify.com"}}}, nil
+	restore := cookies.SetReadCookies(func(ctx context.Context, opts sweetcookie.Options) (sweetcookie.Result, error) {
+		return sweetcookie.Result{Cookies: []sweetcookie.Cookie{{Name: "sp_dc", Value: "token", Domain: ".spotify.com"}}}, nil
 	})
 	defer restore()
 	cmd := AuthImportCmd{}

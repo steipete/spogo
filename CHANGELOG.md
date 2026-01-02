@@ -3,7 +3,7 @@
 ## 0.1.0 - 2026-01-02
 
 - Initial Go CLI scaffold with Kong parsing
-- Cookie-based auth via browserutils/kooky
+- Cookie-based auth via steipete/sweetcookie (local sweetcookie)
 - Search across tracks, albums, artists, playlists, shows, episodes
 - Item info commands for track/album/artist/playlist/show/episode
 - Playback control: play/pause/next/prev/seek/volume/shuffle/repeat/status

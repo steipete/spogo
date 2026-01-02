@@ -10,7 +10,7 @@ Spotify power CLI using web cookies. Search, control playback, manage library/pl
 - Library management (save/remove/follow)
 - Playlist management (create/add/remove/list)
 - Device selection and status
-- Browser cookie import via `kooky`
+- Browser cookie import via `sweetcookie` (local `sweetcookie`)
 - `--json` and `--plain` for scripting
 - Colorized human output (respects `NO_COLOR`, `TERM=dumb`, `--no-color`)
 
@@ -63,7 +63,7 @@ Full spec: `docs/spec.md`.
 
 ## Cookies
 
-`spogo` uses browser cookies (via `kooky`) to fetch a web access token. Import cookies once:
+`spogo` uses browser cookies (via `sweetcookie`) to fetch a web access token. Import cookies once:
 
 ```bash
 spogo auth import --browser chrome

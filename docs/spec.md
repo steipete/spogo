@@ -2,7 +2,7 @@
 
 One-liner: Spotify power CLI using web cookies; search + playback control.
 Parser: Kong.
-Cookies: browserutils/kooky.
+Cookies: steipete/sweetcookie (local sweetcookie).
 Output: human by default; `--plain` or `--json`.
 Color: on by default; respects `NO_COLOR`, `TERM=dumb`, `--no-color`.
 Platforms: macOS, Linux, Windows.
