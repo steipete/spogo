@@ -1,0 +1,36 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - staticcheck
+    - ineffassign
+    - typecheck
+    - revive
+    - gofumpt
+    - gci
+    - unconvert
+    - unused
+    - misspell
+    - prealloc
+
+linters-settings:
+  gofumpt:
+    extra-rules: true
+  gci:
+    custom-order: true
+    sections:
+      - standard
+      - default
+      - blank
+      - dot
+  revive:
+    rules:
+      - name: exported
+        disabled: true
+
+issues:
+  exclude-use-default: false
