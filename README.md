@@ -2,6 +2,17 @@
 
  Power CLI using web cookies. Search, control playback, manage library/playlists, and script with JSON/plain output.
 
+## Why Cookies?
+
+Spotify's official API has strict rate limits that make it impractical for agents and automation. By using browser cookies to authenticate with Spotify's internal web API (the same one their web player uses), spogo bypasses these limitations:
+
+- **No rate limits** - Use the same endpoints as open.spotify.com
+- **No app registration** - No need to create a Spotify Developer app
+- **Full functionality** - Access to everything the web player can do
+- **Agent-friendly** - Perfect for AI assistants and automation scripts
+
+Import your cookies once with `sweetcookie` and you're good to go.
+
 ## Features
 
 - Search tracks, albums, artists, playlists, shows, episodes
