@@ -465,7 +465,7 @@ func (c *Client) send(ctx context.Context, method, path string, params url.Value
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode == http.StatusNoContent {
 		if dest != nil {
 			return ErrNoContent

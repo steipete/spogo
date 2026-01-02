@@ -124,14 +124,7 @@ func mapEpisode(e episodeItem) Item {
 }
 
 func mapDevice(d deviceItem) Device {
-	return Device{
-		ID:         d.ID,
-		Name:       d.Name,
-		Type:       d.Type,
-		Volume:     d.Volume,
-		Active:     d.Active,
-		Restricted: d.Restricted,
-	}
+	return Device(d)
 }
 
 func artistNames(artists []artistRef) []string {

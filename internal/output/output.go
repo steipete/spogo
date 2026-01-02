@@ -108,7 +108,7 @@ func (w *Writer) Errorf(format string, args ...any) {
 	if w.Color {
 		msg = w.Theme.Error(msg)
 	}
-	fmt.Fprintln(w.Err, msg)
+	_, _ = fmt.Fprintln(w.Err, msg)
 }
 
 func theme(enable bool) Theme {

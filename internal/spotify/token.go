@@ -72,7 +72,7 @@ func (p CookieTokenProvider) Token(ctx context.Context) (Token, error) {
 	if err != nil {
 		return Token{}, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return Token{}, apiErrorFromResponse(resp)
 	}

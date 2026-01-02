@@ -31,7 +31,7 @@ func run(args []string, out io.Writer, errOut io.Writer) int {
 		}),
 	)
 	if err != nil {
-		fmt.Fprintln(errOut, err)
+		_, _ = fmt.Fprintln(errOut, err)
 		return 2
 	}
 	kctx, err := parser.Parse(args)
@@ -39,21 +39,21 @@ func run(args []string, out io.Writer, errOut io.Writer) int {
 		return exitCode
 	}
 	if err != nil {
-		fmt.Fprintln(errOut, err)
+		_, _ = fmt.Fprintln(errOut, err)
 		return 2
 	}
 	settings, err := command.Globals.Settings()
 	if err != nil {
-		fmt.Fprintln(errOut, err)
+		_, _ = fmt.Fprintln(errOut, err)
 		return 2
 	}
 	ctx, err := app.NewContext(settings)
 	if err != nil {
-		fmt.Fprintln(errOut, err)
+		_, _ = fmt.Fprintln(errOut, err)
 		return 1
 	}
 	if err := ctx.ValidateProfile(); err != nil {
-		fmt.Fprintln(errOut, err)
+		_, _ = fmt.Fprintln(errOut, err)
 		return 2
 	}
 	if err := kctx.Run(ctx); err != nil {
