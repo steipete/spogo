@@ -2,6 +2,18 @@
 
  Power CLI using web cookies. Search, control playback, manage library/playlists, and script with JSON/plain output.
 
+## Features
+
+- Search tracks, albums, artists, playlists, shows, episodes
+- Playback control: play/pause/next/prev/seek/volume/shuffle/repeat
+- Queue management
+- Library management (save/remove/follow)
+- Playlist management (create/add/remove/list)
+- Device selection and status
+- Browser cookie import via `sweetcookie`
+- `--json` and `--plain` for scripting
+- Colorized human output (respects `NO_COLOR`, `TERM=dumb`, `--no-color`)
+
 ## Why Cookies?
 
 Spotify's official API has strict rate limits that make it impractical for agents and automation. By using browser cookies to authenticate with Spotify's internal web API (the same one their web player uses), spogo bypasses these limitations:
@@ -12,18 +24,6 @@ Spotify's official API has strict rate limits that make it impractical for agent
 - **Agent-friendly** - Perfect for AI assistants and automation scripts
 
 Import your cookies once with `sweetcookie` and you're good to go.
-
-## Features
-
-- Search tracks, albums, artists, playlists, shows, episodes
-- Playback control: play/pause/next/prev/seek/volume/shuffle/repeat
-- Queue management
-- Library management (save/remove/follow)
-- Playlist management (create/add/remove/list)
-- Device selection and status
-- Browser cookie import via `sweetcookie` (local `sweetcookie`)
-- `--json` and `--plain` for scripting
-- Colorized human output (respects `NO_COLOR`, `TERM=dumb`, `--no-color`)
 
 ## Install
 
@@ -90,7 +90,7 @@ Cookies are stored under your config directory (per profile).
 
 ## Legal
 
-This tool interacts with Spotify’s web endpoints. Use responsibly and in accordance with Spotify’s Terms of Service.
+This tool interacts with Spotify's web endpoints. Use responsibly and in accordance with Spotify's Terms of Service.
 
 ## License
 
