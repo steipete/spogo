@@ -150,8 +150,33 @@ func (c *Context) Spotify() (spotify.API, error) {
 		}
 		c.spotifyClient = client
 		return client, nil
+	case "auto":
+		webClient, err := spotify.NewClient(spotify.Options{
+			TokenProvider: spotify.CookieTokenProvider{
+				Source: source,
+			},
+			Market:   c.Profile.Market,
+			Language: c.Profile.Language,
+			Device:   c.Profile.Device,
+			Timeout:  c.Settings.Timeout,
+		})
+		if err != nil {
+			return nil, err
+		}
+		client := spotify.API(webClient)
+		if connectClient, connectErr := spotify.NewConnectClient(spotify.ConnectOptions{
+			Source:   source,
+			Market:   c.Profile.Market,
+			Language: c.Profile.Language,
+			Device:   c.Profile.Device,
+			Timeout:  c.Settings.Timeout,
+		}); connectErr == nil {
+			client = spotify.NewAutoClient(connectClient, webClient)
+		}
+		c.spotifyClient = client
+		return client, nil
 	default:
-		return nil, fmt.Errorf("unknown engine %q (use web or connect)", engine)
+		return nil, fmt.Errorf("unknown engine %q (use auto, web, or connect)", engine)
 	}
 }
 

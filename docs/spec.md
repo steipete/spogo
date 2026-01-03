@@ -29,7 +29,7 @@ spogo [global flags] <command> [args]
 - `--market <cc>` default: account market or `US`
 - `--language <tag>` default: `en`
 - `--device <name|id>` default: active device
-- `--engine <web|connect>` default: `connect`
+- `--engine <auto|web|connect>` default: `connect`
 - `--no-input`
 
 ## Commands
@@ -115,6 +115,7 @@ spogo [global flags] <command> [args]
 
 ## Engines
 
+- `auto`: connect first; fall back to web for unsupported features or rate limits.
 - `connect`: internal connect-state endpoints for playback; GraphQL for search/info.
 - `web`: Web API endpoints; search/info/playback auto-fallback to connect when rate limited.
 

@@ -11,6 +11,7 @@
 - Library management for tracks/albums/artists/playlists
 - Playlist management: create/add/remove/track list
 - Device list and transfer
+- Auto engine (connect first, web fallback)
 - JSON/plain output modes + colored human output
 - Config file support + profiles
 - GitHub Actions CI, linting, formatting, and coverage gate

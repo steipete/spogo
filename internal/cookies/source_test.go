@@ -86,6 +86,24 @@ func TestBrowserSourceWithProfileFilter(t *testing.T) {
 	}
 }
 
+func TestBrowserSourceProfileOnlyUsesDefaults(t *testing.T) {
+	var got sweetcookie.Options
+	restore := SetReadCookies(func(ctx context.Context, opts sweetcookie.Options) (sweetcookie.Result, error) {
+		got = opts
+		return sweetcookie.Result{
+			Cookies: []sweetcookie.Cookie{{Name: "sp_dc", Value: "token", Domain: ".spotify.com"}},
+		}, nil
+	})
+	defer restore()
+	src := BrowserSource{Profile: "Default"}
+	if _, err := src.Cookies(context.Background()); err != nil {
+		t.Fatalf("expected cookies")
+	}
+	if got.Profiles == nil || len(got.Profiles) == 0 {
+		t.Fatalf("expected default profiles map")
+	}
+}
+
 func TestFileSource(t *testing.T) {
 	dir := t.TempDir()
 	path := dir + "/cookies.json"

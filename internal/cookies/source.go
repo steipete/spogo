@@ -66,13 +66,17 @@ func (s BrowserSource) Cookies(ctx context.Context) ([]*http.Cookie, error) {
 		Mode:    sweetcookie.ModeFirst,
 		Timeout: 5 * time.Second,
 	}
-	browser := sweetcookie.Browser("chrome")
 	if s.Browser != "" {
-		browser = sweetcookie.Browser(strings.ToLower(s.Browser))
-	}
-	opts.Browsers = []sweetcookie.Browser{browser}
-	if s.Profile != "" {
-		opts.Profiles = map[sweetcookie.Browser]string{browser: s.Profile}
+		browser := sweetcookie.Browser(strings.ToLower(s.Browser))
+		opts.Browsers = []sweetcookie.Browser{browser}
+		if s.Profile != "" {
+			opts.Profiles = map[sweetcookie.Browser]string{browser: s.Profile}
+		}
+	} else if s.Profile != "" {
+		opts.Profiles = map[sweetcookie.Browser]string{}
+		for _, browser := range sweetcookie.DefaultBrowsers() {
+			opts.Profiles[browser] = s.Profile
+		}
 	}
 	result, err := readCookies(ctx, opts)
 	if err != nil {

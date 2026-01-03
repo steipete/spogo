@@ -159,6 +159,17 @@ func TestSpotifyWebEngine(t *testing.T) {
 	}
 }
 
+func TestSpotifyAutoEngine(t *testing.T) {
+	ctx := &Context{Profile: config.Profile{CookiePath: "/tmp/cookies.json", Engine: "auto"}}
+	client, err := ctx.Spotify()
+	if err != nil {
+		t.Fatalf("spotify: %v", err)
+	}
+	if client == nil {
+		t.Fatalf("expected client")
+	}
+}
+
 func TestSpotifyUnknownEngine(t *testing.T) {
 	ctx := &Context{Profile: config.Profile{CookiePath: "/tmp/cookies.json", Engine: "nope"}}
 	if _, err := ctx.Spotify(); err == nil {

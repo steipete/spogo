@@ -2,12 +2,14 @@ package spotify
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 )
 
 var ErrNoContent = fmt.Errorf("no content")
+var ErrUnsupported = errors.New("unsupported operation")
 
 type APIError struct {
 	Status  int

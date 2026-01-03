@@ -6,11 +6,14 @@ import (
 )
 
 type apiStub struct {
-	calls      map[string]int
-	playbackFn func(context.Context) (PlaybackStatus, error)
-	pauseFn    func(context.Context) error
-	searchFn   func(context.Context, string, string, int, int) (SearchResult, error)
-	devicesFn  func(context.Context) ([]Device, error)
+	calls             map[string]int
+	playbackFn        func(context.Context) (PlaybackStatus, error)
+	pauseFn           func(context.Context) error
+	searchFn          func(context.Context, string, string, int, int) (SearchResult, error)
+	devicesFn         func(context.Context) ([]Device, error)
+	libraryTracksFn   func(context.Context, int, int) ([]Item, int, error)
+	libraryModifyFn   func(context.Context, string, []string, string) error
+	followedArtistsFn func(context.Context, int, string) ([]Item, int, string, error)
 }
 
 func (a apiStub) Search(ctx context.Context, kind, query string, limit, offset int) (SearchResult, error) {
@@ -125,8 +128,11 @@ func (a apiStub) Queue(context.Context) (Queue, error) {
 	return Queue{}, nil
 }
 
-func (a apiStub) LibraryTracks(context.Context, int, int) ([]Item, int, error) {
+func (a apiStub) LibraryTracks(ctx context.Context, limit, offset int) ([]Item, int, error) {
 	a.note("LibraryTracks")
+	if a.libraryTracksFn != nil {
+		return a.libraryTracksFn(ctx, limit, offset)
+	}
 	return nil, 0, nil
 }
 
@@ -135,8 +141,11 @@ func (a apiStub) LibraryAlbums(context.Context, int, int) ([]Item, int, error) {
 	return nil, 0, nil
 }
 
-func (a apiStub) LibraryModify(context.Context, string, []string, string) error {
+func (a apiStub) LibraryModify(ctx context.Context, path string, ids []string, method string) error {
 	a.note("LibraryModify")
+	if a.libraryModifyFn != nil {
+		return a.libraryModifyFn(ctx, path, ids, method)
+	}
 	return nil
 }
 
@@ -145,8 +154,11 @@ func (a apiStub) FollowArtists(context.Context, []string, string) error {
 	return nil
 }
 
-func (a apiStub) FollowedArtists(context.Context, int, string) ([]Item, int, string, error) {
+func (a apiStub) FollowedArtists(ctx context.Context, limit int, after string) ([]Item, int, string, error) {
 	a.note("FollowedArtists")
+	if a.followedArtistsFn != nil {
+		return a.followedArtistsFn(ctx, limit, after)
+	}
 	return nil, 0, "", nil
 }
 

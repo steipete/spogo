@@ -13,7 +13,7 @@
 - Browser cookie import via `sweetcookie`
 - `--json` and `--plain` for scripting
 - Colorized human output (respects `NO_COLOR`, `TERM=dumb`, `--no-color`)
-- Engine switch: `connect` (internal endpoints) or `web` (Web API endpoints; search/info/playback fall back to connect on rate limit)
+- Engine switch: `auto` (connect → web), `connect` (internal endpoints), `web` (Web API endpoints; search/info/playback fall back to connect on rate limit)
 
 ## Why Cookies?
 
@@ -56,7 +56,7 @@ Global flags:
 - `--market <cc>` market country code
 - `--language <tag>` language/locale (default `en`)
 - `--device <name|id>` target device
-- `--engine <web|connect>` API engine (default `connect`)
+- `--engine <auto|web|connect>` API engine (default `connect`)
 - `--json` / `--plain`
 - `--no-color`
 - `-q, --quiet` / `-v, --verbose` / `-d, --debug`
@@ -88,6 +88,10 @@ spogo auth import --browser chrome
 ```
 
 Defaults: Chrome + Default profile. Cookies are stored under your config directory (per profile).
+
+## Auto engine notes
+
+- `auto` tries connect first, then falls back to web on unsupported features or rate limits.
 
 ## Connect engine notes
 
