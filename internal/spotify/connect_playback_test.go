@@ -99,6 +99,46 @@ func TestConnectPlaybackCommands(t *testing.T) {
 	}
 }
 
+func TestConnectPlaybackActiveDeviceFromDevices(t *testing.T) {
+	statePayload := map[string]any{
+		"devices": map[string]any{
+			"device-1": map[string]any{
+				"name":        "Desk",
+				"device_type": "computer",
+				"is_active":   true,
+			},
+		},
+		"player_state": map[string]any{
+			"is_paused": true,
+		},
+	}
+	transport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
+			return jsonResponse(http.StatusOK, statePayload), nil
+		case req.Method == http.MethodPost:
+			return textResponse(http.StatusOK, "ok"), nil
+		default:
+			return textResponse(http.StatusNotFound, "missing"), nil
+		}
+	})
+	client := newConnectClientForTests(transport)
+	client.session.connectDeviceID = "device"
+	client.session.connectionID = "conn"
+	client.session.registeredAt = time.Now()
+
+	devices, err := client.Devices(context.Background())
+	if err != nil {
+		t.Fatalf("devices: %v", err)
+	}
+	if len(devices) != 1 || !devices[0].Active {
+		t.Fatalf("expected active device: %#v", devices)
+	}
+	if err := client.Transfer(context.Background(), "device-1"); err != nil {
+		t.Fatalf("transfer: %v", err)
+	}
+}
+
 func TestSendPlayerCommandMissingDevice(t *testing.T) {
 	client := newConnectClientForTests(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
 		return textResponse(http.StatusOK, ""), nil

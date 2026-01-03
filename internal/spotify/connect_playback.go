@@ -290,6 +290,9 @@ func (c *ConnectClient) connectState(ctx context.Context) (connectState, error) 
 	if active, ok := raw["active_device_id"].(string); ok {
 		state.activeDeviceID = active
 	}
+	if state.activeDeviceID == "" {
+		state.activeDeviceID = detectActiveDeviceID(state.devices)
+	}
 	if origin := mapPlayOriginID(state.playerState); origin != "" {
 		state.originDeviceID = origin
 	}

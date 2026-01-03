@@ -36,6 +36,22 @@ func mapPlayOriginID(player map[string]any) string {
 	return ""
 }
 
+func detectActiveDeviceID(devices map[string]any) string {
+	if devices == nil {
+		return ""
+	}
+	for id, raw := range devices {
+		device, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if getBool(device, "is_active") || getBool(device, "is_currently_playing") || getBool(device, "is_active_device") {
+			return id
+		}
+	}
+	return ""
+}
+
 func connectVersion(auth connectAuth) string {
 	if auth.ConnectVersion != "" {
 		return auth.ConnectVersion
