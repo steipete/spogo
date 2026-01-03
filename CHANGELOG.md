@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 - Unreleased
+
+- CI: bump golangci-lint-action to support golangci-lint v2
+
 ## 0.1.0 - 2026-01-02
 
 - Kong-powered CLI with global flags, config profiles, and env overrides
