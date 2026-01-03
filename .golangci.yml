@@ -1,4 +1,4 @@
-version: 2
+version: "2"
 
 run:
   timeout: 5m
@@ -20,8 +20,3 @@ linters:
     - nilerr
     - nilnil
     - durationcheck
-
-linters-settings: {}
-
-issues:
-  exclude-use-default: false
