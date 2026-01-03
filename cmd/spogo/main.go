@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
-
 	"github.com/steipete/spogo/internal/app"
 	"github.com/steipete/spogo/internal/cli"
 )

@@ -13,6 +13,7 @@
 - Browser cookie import via `sweetcookie`
 - `--json` and `--plain` for scripting
 - Colorized human output (respects `NO_COLOR`, `TERM=dumb`, `--no-color`)
+- Engine switch: `connect` (internal endpoints) or `web` (official API)
 
 ## Why Cookies?
 
@@ -23,7 +24,7 @@ Spotify's official API has strict rate limits that make it impractical for agent
 - **Full functionality** - Access to everything the web player can do
 - **Agent-friendly** - Perfect for AI assistants and automation scripts
 
-Import your cookies once with `sweetcookie` and you're good to go.
+Import your cookies once with `sweetcookie` and you're good to go (defaults to Chrome).
 
 ## Install
 
@@ -55,9 +56,15 @@ Global flags:
 - `--market <cc>` market country code
 - `--language <tag>` language/locale (default `en`)
 - `--device <name|id>` target device
+- `--engine <web|connect>` API engine (default `connect`)
 - `--json` / `--plain`
 - `--no-color`
 - `-q, --quiet` / `-v, --verbose` / `-d, --debug`
+
+Env overrides:
+
+- `SPOGO_TOTP_SECRET_URL` override TOTP secret source (http(s) or `file://...`)
+- `SPOGO_CONNECT_VERSION` override connect client version sent to playback endpoints
 
 Commands:
 
@@ -80,7 +87,12 @@ Full spec: `docs/spec.md`.
 spogo auth import --browser chrome
 ```
 
-Cookies are stored under your config directory (per profile).
+Defaults: Chrome + Default profile. Cookies are stored under your config directory (per profile).
+
+## Connect engine notes
+
+- `connect` uses Spotify's internal connect-state endpoints for playback control.
+- Search/info prefer the internal GraphQL API and fall back to web search if hashes can’t be resolved.
 
 ## Output
 

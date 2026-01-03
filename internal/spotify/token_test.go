@@ -17,12 +17,29 @@ func (stubCookieSource) Cookies(ctx context.Context) ([]*http.Cookie, error) {
 }
 
 func TestCookieTokenProvider(t *testing.T) {
+	restore := SetTotpSecretFetcher(func(ctx context.Context) (int, []byte, error) {
+		return 1, []byte{1, 2, 3, 4}, nil
+	})
+	t.Cleanup(restore)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/get_access_token" {
+		if r.URL.Path != "/api/token" {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		payload := map[string]any{"accessToken": "abc", "expiresIn": 3600, "isAnonymous": false}
+		query := r.URL.Query()
+		if query.Get("reason") == "" || query.Get("productType") == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if query.Get("totp") == "" || query.Get("totpVer") != "1" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		payload := map[string]any{
+			"accessToken":                      "abc",
+			"accessTokenExpirationTimestampMs": time.Now().Add(1 * time.Hour).UnixMilli(),
+			"isAnonymous":                      false,
+		}
 		_ = json.NewEncoder(w).Encode(payload)
 	}))
 	defer srv.Close()
@@ -47,6 +64,10 @@ func TestCookieTokenProviderMissingSource(t *testing.T) {
 }
 
 func TestCookieTokenProviderBadStatus(t *testing.T) {
+	restore := SetTotpSecretFetcher(func(ctx context.Context) (int, []byte, error) {
+		return 1, []byte{1, 2, 3, 4}, nil
+	})
+	t.Cleanup(restore)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 	}))
@@ -58,8 +79,12 @@ func TestCookieTokenProviderBadStatus(t *testing.T) {
 }
 
 func TestCookieTokenProviderMissingToken(t *testing.T) {
+	restore := SetTotpSecretFetcher(func(ctx context.Context) (int, []byte, error) {
+		return 1, []byte{1, 2, 3, 4}, nil
+	})
+	t.Cleanup(restore)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ = json.NewEncoder(w).Encode(map[string]any{"accessToken": "", "expiresIn": 0, "isAnonymous": false})
+		_ = json.NewEncoder(w).Encode(map[string]any{"accessToken": "", "isAnonymous": false})
 	}))
 	defer srv.Close()
 	provider := CookieTokenProvider{Source: stubCookieSource{}, BaseURL: srv.URL + "/"}

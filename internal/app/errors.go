@@ -6,7 +6,6 @@ import (
 	"net"
 
 	"github.com/alecthomas/kong"
-
 	"github.com/steipete/spogo/internal/spotify"
 )
 

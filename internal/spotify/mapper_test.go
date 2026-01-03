@@ -66,6 +66,21 @@ func TestMapSearchItemEpisode(t *testing.T) {
 	}
 }
 
+func TestMapSearchItemBadJSON(t *testing.T) {
+	if _, err := mapSearchItem("track", json.RawMessage(`{`)); err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestMapSearchItemBadJSONOtherKinds(t *testing.T) {
+	kinds := []string{"album", "artist", "playlist", "show", "episode"}
+	for _, kind := range kinds {
+		if _, err := mapSearchItem(kind, json.RawMessage(`{`)); err == nil {
+			t.Fatalf("expected error for %s", kind)
+		}
+	}
+}
+
 func TestExternalURL(t *testing.T) {
 	if externalURL(nil) != "" {
 		t.Fatalf("expected empty")

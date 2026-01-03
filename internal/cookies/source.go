@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -43,12 +44,25 @@ func (s BrowserSource) Cookies(ctx context.Context) ([]*http.Cookie, error) {
 	if domain == "" {
 		domain = "spotify.com"
 	}
-	url := domain
-	if !strings.Contains(domain, "://") {
-		url = "https://" + domain
+	host := domain
+	if strings.Contains(domain, "://") {
+		if parsed, err := url.Parse(domain); err == nil && parsed.Hostname() != "" {
+			host = parsed.Hostname()
+		}
+	}
+	url := "https://" + host
+	origins := []string{}
+	if strings.Contains(host, "spotify.com") {
+		if host != "open.spotify.com" {
+			origins = append(origins, "https://open.spotify.com")
+		}
+		if host != "spotify.com" {
+			origins = append(origins, "https://spotify.com")
+		}
 	}
 	opts := sweetcookie.Options{
 		URL:     url,
+		Origins: origins,
 		Mode:    sweetcookie.ModeFirst,
 		Timeout: 5 * time.Second,
 	}

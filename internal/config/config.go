@@ -25,6 +25,7 @@ type Profile struct {
 	Market         string `toml:"market"`
 	Language       string `toml:"language"`
 	Device         string `toml:"device"`
+	Engine         string `toml:"engine"`
 }
 
 func DefaultPath() (string, error) {

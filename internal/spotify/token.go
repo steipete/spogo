@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ type Token struct {
 	AccessToken string
 	ExpiresAt   time.Time
 	Anonymous   bool
+	ClientID    string
 }
 
 type TokenProvider interface {
@@ -30,9 +32,11 @@ type CookieTokenProvider struct {
 }
 
 type tokenResponse struct {
-	AccessToken string `json:"accessToken"`
-	ExpiresIn   int    `json:"expiresIn"`
-	IsAnonymous bool   `json:"isAnonymous"`
+	AccessToken                    string `json:"accessToken"`
+	ExpiresIn                      int    `json:"expiresIn"`
+	AccessTokenExpirationTimestamp int64  `json:"accessTokenExpirationTimestampMs"`
+	IsAnonymous                    bool   `json:"isAnonymous"`
+	ClientID                       string `json:"clientId"`
 }
 
 func (p CookieTokenProvider) Token(ctx context.Context) (Token, error) {
@@ -62,12 +66,33 @@ func (p CookieTokenProvider) Token(ctx context.Context) (Token, error) {
 	} else {
 		client.Jar = jar
 	}
-	reqURL := base + "get_access_token?reason=transport&productType=web_player"
+	code, version, err := generateTOTP(ctx, time.Now())
+	if err != nil {
+		return Token{}, err
+	}
+	params := url.Values{}
+	params.Set("reason", "init")
+	params.Set("productType", "web-player")
+	params.Set("totp", code)
+	params.Set("totpVer", strconv.Itoa(version))
+	params.Set("totpServer", code)
+	reqURL := base + "api/token?" + params.Encode()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return Token{}, err
 	}
 	req.Header.Set("User-Agent", defaultUserAgent())
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	req.Header.Set("Origin", "https://open.spotify.com")
+	req.Header.Set("Referer", "https://open.spotify.com/")
+	req.Header.Set("Sec-Fetch-Site", "same-origin")
+	req.Header.Set("Sec-Fetch-Mode", "cors")
+	req.Header.Set("Sec-Fetch-Dest", "empty")
+	req.Header.Set("Sec-CH-UA", "\"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\", \"Google Chrome\";v=\"131\"")
+	req.Header.Set("Sec-CH-UA-Platform", "\"macOS\"")
+	req.Header.Set("Sec-CH-UA-Mobile", "?0")
+	req.Header.Set("app-platform", "WebPlayer")
 	resp, err := client.Do(req)
 	if err != nil {
 		return Token{}, err
@@ -83,9 +108,14 @@ func (p CookieTokenProvider) Token(ctx context.Context) (Token, error) {
 	if payload.AccessToken == "" {
 		return Token{}, errors.New("missing access token")
 	}
+	expiresAt := time.Now().Add(time.Duration(payload.ExpiresIn) * time.Second)
+	if payload.AccessTokenExpirationTimestamp > 0 {
+		expiresAt = time.UnixMilli(payload.AccessTokenExpirationTimestamp)
+	}
 	return Token{
 		AccessToken: payload.AccessToken,
-		ExpiresAt:   time.Now().Add(time.Duration(payload.ExpiresIn) * time.Second),
+		ExpiresAt:   expiresAt,
 		Anonymous:   payload.IsAnonymous,
+		ClientID:    payload.ClientID,
 	}, nil
 }

@@ -29,6 +29,7 @@ spogo [global flags] <command> [args]
 - `--market <cc>` default: account market or `US`
 - `--language <tag>` default: `en`
 - `--device <name|id>` default: active device
+- `--engine <web|connect>` default: `connect`
 - `--no-input`
 
 ## Commands
@@ -37,10 +38,10 @@ spogo [global flags] <command> [args]
 
 - `spogo auth status`
 - `spogo auth import`
-  - flags: `--browser <chrome|brave|edge|firefox|safari>`
+  - flags: `--browser <chrome|brave|edge|firefox|safari>` default: `chrome`
   - `--browser-profile <name>`
   - `--cookie-path <file>`
-  - `--domain <host>` default `open.spotify.com`
+  - `--domain <host>` default `spotify.com`
 - `spogo auth clear`
 
 ### search
@@ -125,6 +126,9 @@ spogo [global flags] <command> [args]
 - Env prefix: `SPOGO_`
 - Precedence: flags > env > config
 - Secrets: never via flags; use browser cookies only.
+- Overrides:
+  - `SPOGO_TOTP_SECRET_URL` (http(s) or `file://...`)
+  - `SPOGO_CONNECT_VERSION` (connect playback client version)
 
 ## Examples
 

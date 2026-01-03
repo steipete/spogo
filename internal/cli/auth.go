@@ -68,6 +68,9 @@ func (cmd *AuthImportCmd) Run(ctx *app.Context) error {
 	if browser == "" {
 		browser = ctx.Profile.Browser
 	}
+	if browser == "" {
+		browser = "chrome"
+	}
 	if profile == "" {
 		profile = ctx.Profile.BrowserProfile
 	}
@@ -135,8 +138,12 @@ func readCookies(ctx *app.Context) ([]*http.Cookie, string, error) {
 			return fileCookies, "file", nil
 		}
 	}
-	browser := cookies.BrowserSource{Browser: ctx.Profile.Browser, Profile: ctx.Profile.BrowserProfile, Domain: "spotify.com"}
-	browserCookies, err := browser.Cookies(context.Background())
+	browser := strings.ToLower(strings.TrimSpace(ctx.Profile.Browser))
+	if browser == "" {
+		browser = "chrome"
+	}
+	browserSource := cookies.BrowserSource{Browser: browser, Profile: ctx.Profile.BrowserProfile, Domain: "spotify.com"}
+	browserCookies, err := browserSource.Cookies(context.Background())
 	if err != nil {
 		return nil, "", err
 	}

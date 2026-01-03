@@ -5,6 +5,8 @@ run:
 
 linters:
   enable:
+    - asciicheck
+    - bidichk
     - errcheck
     - govet
     - staticcheck

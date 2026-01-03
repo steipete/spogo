@@ -118,6 +118,18 @@ func TestCookieSourceBrowser(t *testing.T) {
 	}
 }
 
+func TestCookieSourceDefaultBrowser(t *testing.T) {
+	ctx := &Context{Profile: config.Profile{}}
+	src, err := ctx.cookieSource()
+	if err != nil {
+		t.Fatalf("cookie source: %v", err)
+	}
+	browser, ok := src.(cookies.BrowserSource)
+	if !ok || browser.Browser != "chrome" {
+		t.Fatalf("expected chrome source")
+	}
+}
+
 func TestSpotifyNilContext(t *testing.T) {
 	var ctx *Context
 	if _, err := ctx.Spotify(); err == nil {
@@ -133,6 +145,24 @@ func TestSpotifyBuildsClient(t *testing.T) {
 	}
 	if client == nil {
 		t.Fatalf("expected client")
+	}
+}
+
+func TestSpotifyWebEngine(t *testing.T) {
+	ctx := &Context{Profile: config.Profile{CookiePath: "/tmp/cookies.json", Engine: "web"}}
+	client, err := ctx.Spotify()
+	if err != nil {
+		t.Fatalf("spotify: %v", err)
+	}
+	if client == nil {
+		t.Fatalf("expected client")
+	}
+}
+
+func TestSpotifyUnknownEngine(t *testing.T) {
+	ctx := &Context{Profile: config.Profile{CookiePath: "/tmp/cookies.json", Engine: "nope"}}
+	if _, err := ctx.Spotify(); err == nil {
+		t.Fatalf("expected error")
 	}
 }
 
@@ -196,24 +226,31 @@ type dummySpotify struct{}
 func (dummySpotify) Search(context.Context, string, string, int, int) (spotify.SearchResult, error) {
 	return spotify.SearchResult{}, nil
 }
+
 func (dummySpotify) GetTrack(context.Context, string) (spotify.Item, error) {
 	return spotify.Item{}, nil
 }
+
 func (dummySpotify) GetAlbum(context.Context, string) (spotify.Item, error) {
 	return spotify.Item{}, nil
 }
+
 func (dummySpotify) GetArtist(context.Context, string) (spotify.Item, error) {
 	return spotify.Item{}, nil
 }
+
 func (dummySpotify) GetPlaylist(context.Context, string) (spotify.Item, error) {
 	return spotify.Item{}, nil
 }
+
 func (dummySpotify) GetShow(context.Context, string) (spotify.Item, error) {
 	return spotify.Item{}, nil
 }
+
 func (dummySpotify) GetEpisode(context.Context, string) (spotify.Item, error) {
 	return spotify.Item{}, nil
 }
+
 func (dummySpotify) Playback(context.Context) (spotify.PlaybackStatus, error) {
 	return spotify.PlaybackStatus{}, nil
 }
@@ -232,6 +269,7 @@ func (dummySpotify) Queue(context.Context) (spotify.Queue, error)      { return 
 func (dummySpotify) LibraryTracks(context.Context, int, int) ([]spotify.Item, int, error) {
 	return nil, 0, nil
 }
+
 func (dummySpotify) LibraryAlbums(context.Context, int, int) ([]spotify.Item, int, error) {
 	return nil, 0, nil
 }
@@ -240,12 +278,15 @@ func (dummySpotify) FollowArtists(context.Context, []string, string) error      
 func (dummySpotify) FollowedArtists(context.Context, int, string) ([]spotify.Item, int, string, error) {
 	return nil, 0, "", nil
 }
+
 func (dummySpotify) Playlists(context.Context, int, int) ([]spotify.Item, int, error) {
 	return nil, 0, nil
 }
+
 func (dummySpotify) PlaylistTracks(context.Context, string, int, int) ([]spotify.Item, int, error) {
 	return nil, 0, nil
 }
+
 func (dummySpotify) CreatePlaylist(context.Context, string, bool, bool) (spotify.Item, error) {
 	return spotify.Item{}, nil
 }

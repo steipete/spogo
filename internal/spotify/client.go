@@ -483,21 +483,3 @@ func (c *Client) send(ctx context.Context, method, path string, params url.Value
 	}
 	return json.NewDecoder(resp.Body).Decode(dest)
 }
-
-func (c *Client) token(ctx context.Context) (string, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.lastToken.AccessToken != "" && time.Until(c.lastToken.ExpiresAt) > time.Minute {
-		return c.lastToken.AccessToken, nil
-	}
-	newToken, err := c.provider.Token(ctx)
-	if err != nil {
-		return "", err
-	}
-	c.lastToken = newToken
-	return newToken.AccessToken, nil
-}
-
-func defaultUserAgent() string {
-	return "spogo/0.1.0 (+https://github.com/steipete/spogo)"
-}

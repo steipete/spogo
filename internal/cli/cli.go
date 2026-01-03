@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-
 	"github.com/steipete/spogo/internal/app"
 	"github.com/steipete/spogo/internal/output"
 )
@@ -51,6 +50,7 @@ type Globals struct {
 	Market   string           `help:"Market country code." env:"SPOGO_MARKET"`
 	Language string           `help:"Language/locale." env:"SPOGO_LANGUAGE"`
 	Device   string           `help:"Device name or id." env:"SPOGO_DEVICE"`
+	Engine   string           `help:"Engine (web|connect)." env:"SPOGO_ENGINE"`
 	JSON     bool             `help:"JSON output." env:"SPOGO_JSON"`
 	Plain    bool             `help:"Plain output." env:"SPOGO_PLAIN"`
 	NoColor  bool             `help:"Disable color output." env:"SPOGO_NO_COLOR"`
@@ -73,6 +73,7 @@ func (g Globals) Settings() (app.Settings, error) {
 		Market:     g.Market,
 		Language:   g.Language,
 		Device:     g.Device,
+		Engine:     g.Engine,
 		Format:     format,
 		NoColor:    g.NoColor,
 		Quiet:      g.Quiet,

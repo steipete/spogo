@@ -4,15 +4,16 @@ go 1.24.0
 
 require (
 	github.com/alecthomas/kong v1.13.0
+	github.com/coder/websocket v1.8.14
 	github.com/daixiang0/gci v0.13.7
 	github.com/fatih/color v1.18.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/pelletier/go-toml/v2 v2.2.4
-	github.com/steipete/sweetcookie v0.0.0-20260102210634-c44f0a226a33
+	github.com/steipete/sweetcookie v0.0.0-20260102214724-68ec5a0bced4
 	mvdan.cc/gofumpt v0.9.2
 )
 
-replace github.com/steipete/sweetcookie => /Users/steipete/Projects/sweetcookie
+replace github.com/steipete/sweetcookie => /Users/steipete/Projects/gookie
 
 require (
 	al.essio.dev/pkg/shellescape v1.6.0 // indirect

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/mattn/go-isatty"
-
 	"github.com/steipete/spogo/internal/config"
 	"github.com/steipete/spogo/internal/cookies"
 	"github.com/steipete/spogo/internal/output"
@@ -22,6 +21,7 @@ type Settings struct {
 	Market     string
 	Language   string
 	Device     string
+	Engine     string
 	Format     output.Format
 	NoColor    bool
 	Quiet      bool
@@ -69,6 +69,9 @@ func NewContext(settings Settings) (*Context, error) {
 	if settings.Device != "" {
 		profile.Device = settings.Device
 	}
+	if settings.Engine != "" {
+		profile.Engine = settings.Engine
+	}
 	format := settings.Format
 	if format == "" {
 		format = output.FormatHuman
@@ -103,21 +106,43 @@ func (c *Context) Spotify() (spotify.API, error) {
 	if err != nil {
 		return nil, err
 	}
-	provider := spotify.CookieTokenProvider{
-		Source: source,
+	engine := strings.ToLower(strings.TrimSpace(c.Profile.Engine))
+	if engine == "" {
+		engine = "connect"
 	}
-	client, err := spotify.NewClient(spotify.Options{
-		TokenProvider: provider,
-		Market:        c.Profile.Market,
-		Language:      c.Profile.Language,
-		Device:        c.Profile.Device,
-		Timeout:       c.Settings.Timeout,
-	})
-	if err != nil {
-		return nil, err
+	switch engine {
+	case "connect":
+		client, err := spotify.NewConnectClient(spotify.ConnectOptions{
+			Source:   source,
+			Market:   c.Profile.Market,
+			Language: c.Profile.Language,
+			Device:   c.Profile.Device,
+			Timeout:  c.Settings.Timeout,
+		})
+		if err != nil {
+			return nil, err
+		}
+		c.spotifyClient = client
+		return client, nil
+	case "web":
+		provider := spotify.CookieTokenProvider{
+			Source: source,
+		}
+		client, err := spotify.NewClient(spotify.Options{
+			TokenProvider: provider,
+			Market:        c.Profile.Market,
+			Language:      c.Profile.Language,
+			Device:        c.Profile.Device,
+			Timeout:       c.Settings.Timeout,
+		})
+		if err != nil {
+			return nil, err
+		}
+		c.spotifyClient = client
+		return client, nil
+	default:
+		return nil, fmt.Errorf("unknown engine %q (use web or connect)", engine)
 	}
-	c.spotifyClient = client
-	return client, nil
 }
 
 func (c *Context) SetSpotify(client spotify.API) {
@@ -131,8 +156,12 @@ func (c *Context) cookieSource() (cookies.Source, error) {
 	if c.Profile.CookiePath != "" {
 		return cookies.FileSource{Path: c.Profile.CookiePath}, nil
 	}
+	browser := c.Profile.Browser
+	if strings.TrimSpace(browser) == "" {
+		browser = "chrome"
+	}
 	return cookies.BrowserSource{
-		Browser: c.Profile.Browser,
+		Browser: browser,
 		Profile: c.Profile.BrowserProfile,
 		Domain:  "spotify.com",
 	}, nil
