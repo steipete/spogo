@@ -13,7 +13,7 @@
 - Browser cookie import via `sweetcookie`
 - `--json` and `--plain` for scripting
 - Colorized human output (respects `NO_COLOR`, `TERM=dumb`, `--no-color`)
-- Engine switch: `connect` (internal endpoints) or `web` (Web API endpoints; playback falls back to connect on rate limit)
+- Engine switch: `connect` (internal endpoints) or `web` (Web API endpoints; search/info/playback fall back to connect on rate limit)
 
 ## Why Cookies?
 
@@ -96,7 +96,7 @@ Defaults: Chrome + Default profile. Cookies are stored under your config directo
 
 ## Web engine notes
 
-- `web` uses Web API endpoints; playback operations auto-fallback to connect when rate limited.
+- `web` uses Web API endpoints; search/info/playback auto-fallback to connect when rate limited.
 
 ## Output
 

@@ -236,7 +236,7 @@ func TestFallbackSkipsNonRateLimit(t *testing.T) {
 	}
 }
 
-func TestFallbackDisabledForSearch(t *testing.T) {
+func TestFallbackSearchOnRateLimit(t *testing.T) {
 	ctx := context.Background()
 	webCalls := 0
 	connectCalls := 0
@@ -253,10 +253,10 @@ func TestFallbackDisabledForSearch(t *testing.T) {
 		},
 	}
 	client := NewPlaybackFallbackClient(web, connect)
-	if _, err := client.Search(ctx, "track", "test", 1, 0); err == nil {
-		t.Fatalf("expected error")
+	if _, err := client.Search(ctx, "track", "test", 1, 0); err != nil {
+		t.Fatalf("expected fallback success, got error: %v", err)
 	}
-	if webCalls != 1 || connectCalls != 0 {
+	if webCalls != 1 || connectCalls != 1 {
 		t.Fatalf("unexpected call counts web=%d connect=%d", webCalls, connectCalls)
 	}
 }

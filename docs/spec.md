@@ -116,7 +116,7 @@ spogo [global flags] <command> [args]
 ## Engines
 
 - `connect`: internal connect-state endpoints for playback; GraphQL for search/info.
-- `web`: Web API endpoints; playback auto-fallback to connect when rate limited.
+- `web`: Web API endpoints; search/info/playback auto-fallback to connect when rate limited.
 
 ## Exit codes
 

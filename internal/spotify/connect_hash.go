@@ -76,6 +76,19 @@ func (h *hashResolver) load(ctx context.Context, ops []string) error {
 	if err != nil {
 		return err
 	}
+	if found := findOperationHashes(mainBody, need); len(found) > 0 {
+		h.mu.Lock()
+		for op, hash := range found {
+			if h.hashes[op] == "" {
+				h.hashes[op] = hash
+			}
+		}
+		h.mu.Unlock()
+		need = filterMissing(need, found)
+		if len(need) == 0 {
+			return nil
+		}
+	}
 	nameMap, hashMap, err := parseWebpackMaps(mainBody)
 	if err != nil {
 		return err
@@ -286,6 +299,12 @@ func findOperationHashes(body string, ops []string) map[string]string {
 		escaped := regexp.QuoteMeta(op)
 		pattern := regexp.MustCompile(`(?s)` + escaped + `.{0,400}?sha256Hash\":\"([a-f0-9]{64})\"`)
 		match := pattern.FindStringSubmatch(body)
+		if len(match) > 1 {
+			found[op] = match[1]
+			continue
+		}
+		pattern = regexp.MustCompile(`"` + escaped + `\",\"(?:query|mutation)\",\"([a-f0-9]{64})\"`)
+		match = pattern.FindStringSubmatch(body)
 		if len(match) > 1 {
 			found[op] = match[1]
 			continue

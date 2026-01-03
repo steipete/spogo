@@ -54,7 +54,11 @@ func (c *ConnectClient) graphQL(ctx context.Context, operation string, variables
 		req.Header.Set("Accept-Language", c.language)
 	}
 	req.Header.Set("app-platform", "WebPlayer")
-	resp, err := c.client.Do(req)
+	client := c.searchClient
+	if client == nil {
+		client = c.client
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +107,14 @@ func (c *ConnectClient) search(ctx context.Context, kind, query string, limit, o
 		offset = 0
 	}
 	variables := map[string]any{
-		"searchTerm": query,
-		"offset":     offset,
-		"limit":      limit,
+		"searchTerm":                    query,
+		"offset":                        offset,
+		"limit":                         limit,
+		"numberOfTopResults":            5,
+		"includeAudiobooks":             true,
+		"includePreReleases":            true,
+		"includeLocalConcertsField":     false,
+		"includeArtistHasConcertsField": false,
 	}
 	payload, err := c.graphQL(ctx, "searchDesktop", variables)
 	if err != nil {
@@ -224,11 +233,73 @@ func (c *ConnectClient) infoByOperation(ctx context.Context, operation string, v
 }
 
 func (c *ConnectClient) searchViaWeb(ctx context.Context, kind, query string, limit, offset int) (SearchResult, error) {
-	web, err := c.webClient()
+	return c.searchViaWebAPI(ctx, kind, query, limit, offset)
+}
+
+func (c *ConnectClient) searchViaWebAPI(ctx context.Context, kind, query string, limit, offset int) (SearchResult, error) {
+	auth, err := c.session.auth(ctx)
 	if err != nil {
 		return SearchResult{}, err
 	}
-	return web.Search(ctx, kind, query, limit, offset)
+	params := url.Values{}
+	params.Set("q", query)
+	params.Set("type", kind)
+	params.Set("limit", fmt.Sprint(limit))
+	params.Set("offset", fmt.Sprint(offset))
+	if c.market != "" && params.Get("market") == "" {
+		params.Set("market", c.market)
+	}
+	if c.language != "" && params.Get("locale") == "" {
+		params.Set("locale", c.language)
+	}
+	searchURL := c.searchURL
+	if searchURL == "" {
+		searchURL = "https://api.spotify.com/v1/search"
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, searchURL+"?"+params.Encode(), nil)
+	if err != nil {
+		return SearchResult{}, err
+	}
+	req.Header.Set("Authorization", "Bearer "+auth.AccessToken)
+	req.Header.Set("Client-Token", auth.ClientToken)
+	req.Header.Set("Spotify-App-Version", auth.ClientVersion)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", defaultUserAgent())
+	req.Header.Set("app-platform", "WebPlayer")
+	if c.language != "" {
+		req.Header.Set("Accept-Language", c.language)
+	}
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return SearchResult{}, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return SearchResult{}, apiErrorFromResponse(resp)
+	}
+	var response map[string]searchContainer
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return SearchResult{}, err
+	}
+	container, ok := response[kind]
+	if !ok {
+		return SearchResult{}, fmt.Errorf("missing %s result", kind)
+	}
+	items := make([]Item, 0, len(container.Items))
+	for _, raw := range container.Items {
+		item, err := mapSearchItem(kind, raw)
+		if err != nil {
+			return SearchResult{}, err
+		}
+		items = append(items, item)
+	}
+	return SearchResult{
+		Type:   kind,
+		Limit:  container.Limit,
+		Offset: container.Offset,
+		Total:  container.Total,
+		Items:  items,
+	}, nil
 }
 
 func (c *ConnectClient) webClient() (*Client, error) {

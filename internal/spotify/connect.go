@@ -19,15 +19,17 @@ type ConnectOptions struct {
 }
 
 type ConnectClient struct {
-	source   cookies.Source
-	market   string
-	language string
-	device   string
-	client   *http.Client
-	session  *connectSession
-	hashes   *hashResolver
-	webMu    sync.Mutex
-	web      *Client
+	source       cookies.Source
+	market       string
+	language     string
+	device       string
+	client       *http.Client
+	session      *connectSession
+	hashes       *hashResolver
+	webMu        sync.Mutex
+	web          *Client
+	searchURL    string
+	searchClient *http.Client
 }
 
 func NewConnectClient(opts ConnectOptions) (*ConnectClient, error) {

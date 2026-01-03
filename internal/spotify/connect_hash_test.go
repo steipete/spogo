@@ -34,3 +34,20 @@ func TestFindOperationHashes(t *testing.T) {
 		t.Fatalf("expected hash")
 	}
 }
+
+func TestFindOperationHashesAltPattern(t *testing.T) {
+	body := `"searchDesktop","query","0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"`
+	found := findOperationHashes(body, []string{"searchDesktop"})
+	if found["searchDesktop"] == "" {
+		t.Fatalf("expected hash")
+	}
+}
+
+func TestScoreMapsEmpty(t *testing.T) {
+	if scoreHashMap(nil) != 0 {
+		t.Fatalf("expected 0 for empty hash map")
+	}
+	if scoreNameMap(nil) != 0 {
+		t.Fatalf("expected 0 for empty name map")
+	}
+}

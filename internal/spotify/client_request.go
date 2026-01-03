@@ -37,7 +37,10 @@ func (c *Client) postParams(ctx context.Context, path string, params url.Values)
 }
 
 func (c *Client) send(ctx context.Context, method, path string, params url.Values, payload any, dest any) error {
-	const maxAttempts = 3
+	const (
+		maxAttempts   = 3
+		maxRetryDelay = 3 * time.Second
+	)
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		requestURL := c.baseURL + path
 		if params == nil {
@@ -93,6 +96,9 @@ func (c *Client) send(ctx context.Context, method, path string, params url.Value
 				if seconds, err := strconv.Atoi(header); err == nil && seconds > 0 {
 					retryAfter = time.Duration(seconds) * time.Second
 				}
+			}
+			if retryAfter > maxRetryDelay {
+				retryAfter = maxRetryDelay
 			}
 			_ = resp.Body.Close()
 			c.mu.Lock()
