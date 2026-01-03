@@ -2,17 +2,18 @@
 
 ## 0.1.0 - 2026-01-02
 
-- Initial Go CLI scaffold with Kong parsing
-- Cookie-based auth via steipete/sweetcookie (local sweetcookie)
-- Search across tracks, albums, artists, playlists, shows, episodes
-- Item info commands for track/album/artist/playlist/show/episode
+- Kong-powered CLI with global flags, config profiles, and env overrides
+- Auth commands: cookie status/import/clear with browser/profile selection
+- Cookie-based auth via steipete/sweetcookie (file cache + browser sources)
+- Search tracks/albums/artists/playlists/shows/episodes
+- Item info for track/album/artist/playlist/show/episode
 - Playback control: play/pause/next/prev/seek/volume/shuffle/repeat/status
-- Artist play uses top tracks (fallback via search)
+- Artist play (top tracks; falls back to search)
 - Queue add/show
-- Library management for tracks/albums/artists/playlists
+- Library list/add/remove for tracks/albums; follow/unfollow artists; playlists list
 - Playlist management: create/add/remove/track list
-- Device list and transfer
-- Auto engine (connect first, web fallback)
-- JSON/plain output modes + colored human output
-- Config file support + profiles
+- Device list and transfer/set
+- Engines: connect (internal), web (Web API), auto (connect → web fallback)
+- Rate-limit fallback on 429s where supported
+- Output: human color + `--plain` + `--json` (NO_COLOR/TERM aware)
 - GitHub Actions CI, linting, formatting, and coverage gate
