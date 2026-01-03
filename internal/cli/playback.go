@@ -41,6 +41,10 @@ type RepeatCmd struct {
 
 type StatusCmd struct{}
 
+type artistTopTracks interface {
+	ArtistTopTracks(ctx context.Context, id string, limit int) ([]spotify.Item, error)
+}
+
 func (cmd *PlayCmd) Run(ctx *app.Context) error {
 	client, err := ctx.Spotify()
 	if err != nil {
@@ -59,7 +63,41 @@ func (cmd *PlayCmd) Run(ctx *app.Context) error {
 			res.Type = cmd.Type
 			res.URI = "spotify:" + cmd.Type + ":" + res.ID
 		}
-		uri = res.URI
+		if res.Type == "artist" {
+			topTracks, ok := client.(artistTopTracks)
+			if !ok {
+				return errors.New("artist playback not supported by engine")
+			}
+			tracks, err := topTracks.ArtistTopTracks(context.Background(), res.ID, 10)
+			if err == nil && len(tracks) > 0 {
+				uri = tracks[0].URI
+			} else {
+				artist, aerr := client.GetArtist(context.Background(), res.ID)
+				if aerr != nil || artist.Name == "" {
+					if err != nil {
+						return err
+					}
+					return errors.New("no artist tracks found")
+				}
+				query := fmt.Sprintf("artist:%q", artist.Name)
+				search, serr := client.Search(context.Background(), "track", query, 1, 0)
+				if serr != nil {
+					if err != nil {
+						return err
+					}
+					return serr
+				}
+				if len(search.Items) == 0 {
+					if err != nil {
+						return err
+					}
+					return errors.New("no artist tracks found")
+				}
+				uri = search.Items[0].URI
+			}
+		} else {
+			uri = res.URI
+		}
 	}
 	if err := client.Play(context.Background(), uri); err != nil {
 		return err

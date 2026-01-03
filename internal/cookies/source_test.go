@@ -99,7 +99,7 @@ func TestBrowserSourceProfileOnlyUsesDefaults(t *testing.T) {
 	if _, err := src.Cookies(context.Background()); err != nil {
 		t.Fatalf("expected cookies")
 	}
-	if got.Profiles == nil || len(got.Profiles) == 0 {
+	if len(got.Profiles) == 0 {
 		t.Fatalf("expected default profiles map")
 	}
 }

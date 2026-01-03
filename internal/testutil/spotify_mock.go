@@ -17,6 +17,7 @@ type SpotifyMock struct {
 	GetPlaylistFn     func(context.Context, string) (spotify.Item, error)
 	GetShowFn         func(context.Context, string) (spotify.Item, error)
 	GetEpisodeFn      func(context.Context, string) (spotify.Item, error)
+	ArtistTopTracksFn func(context.Context, string, int) ([]spotify.Item, error)
 	PlaybackFn        func(context.Context) (spotify.PlaybackStatus, error)
 	PlayFn            func(context.Context, string) error
 	PauseFn           func(context.Context) error
@@ -89,6 +90,13 @@ func (m *SpotifyMock) GetEpisode(ctx context.Context, id string) (spotify.Item, 
 		return spotify.Item{}, ErrNotImplemented
 	}
 	return m.GetEpisodeFn(ctx, id)
+}
+
+func (m *SpotifyMock) ArtistTopTracks(ctx context.Context, id string, limit int) ([]spotify.Item, error) {
+	if m.ArtistTopTracksFn == nil {
+		return nil, ErrNotImplemented
+	}
+	return m.ArtistTopTracksFn(ctx, id, limit)
 }
 
 func (m *SpotifyMock) Playback(ctx context.Context) (spotify.PlaybackStatus, error) {

@@ -11,6 +11,10 @@ type fallbackClient struct {
 	connect API
 }
 
+type artistTopTracksAPI interface {
+	ArtistTopTracks(ctx context.Context, id string, limit int) ([]Item, error)
+}
+
 func NewPlaybackFallbackClient(web API, connect API) API {
 	return &fallbackClient{web: web, connect: connect}
 }
@@ -40,6 +44,21 @@ func (c *fallbackClient) Search(ctx context.Context, kind, query string, limit, 
 	return fallbackCall(c, true, func(api API) (SearchResult, error) {
 		return api.Search(ctx, kind, query, limit, offset)
 	})
+}
+
+func (c *fallbackClient) ArtistTopTracks(ctx context.Context, id string, limit int) ([]Item, error) {
+	web, ok := c.web.(artistTopTracksAPI)
+	if !ok {
+		return nil, ErrUnsupported
+	}
+	items, err := web.ArtistTopTracks(ctx, id, limit)
+	if err == nil || c.connect == nil || !c.shouldFallback(err) {
+		return items, err
+	}
+	if connect, ok := c.connect.(artistTopTracksAPI); ok {
+		return connect.ArtistTopTracks(ctx, id, limit)
+	}
+	return items, err
 }
 
 func (c *fallbackClient) GetTrack(ctx context.Context, id string) (Item, error) {

@@ -20,6 +20,11 @@ func TestClientEndpoints(t *testing.T) {
 	mux.HandleFunc("/artists/ar1", func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(artistItem{ID: "ar1", URI: "spotify:artist:ar1", Name: "Artist"})
 	})
+	mux.HandleFunc("/artists/ar1/top-tracks", func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(artistTopTracksResponse{
+			Tracks: []trackItem{{ID: "t1", URI: "spotify:track:t1", Name: "Track", Album: albumRef{Name: "Album"}}},
+		})
+	})
 	mux.HandleFunc("/playlists/p1", func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(playlistItem{ID: "p1", URI: "spotify:playlist:p1", Name: "Playlist"})
 	})
@@ -117,6 +122,9 @@ func TestClientEndpoints(t *testing.T) {
 	}
 	if _, err := client.GetArtist(context.Background(), "ar1"); err != nil {
 		t.Fatalf("artist: %v", err)
+	}
+	if _, err := client.ArtistTopTracks(context.Background(), "ar1", 1); err != nil {
+		t.Fatalf("artist top tracks: %v", err)
 	}
 	if _, err := client.GetPlaylist(context.Background(), "p1"); err != nil {
 		t.Fatalf("playlist: %v", err)

@@ -6,6 +6,7 @@
 
 - Search tracks, albums, artists, playlists, shows, episodes
 - Playback control: play/pause/next/prev/seek/volume/shuffle/repeat
+- Play artists (starts with top tracks)
 - Queue management
 - Library management (save/remove/follow)
 - Playlist management (create/add/remove/list)

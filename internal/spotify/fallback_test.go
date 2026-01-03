@@ -14,6 +14,7 @@ type apiStub struct {
 	libraryTracksFn   func(context.Context, int, int) ([]Item, int, error)
 	libraryModifyFn   func(context.Context, string, []string, string) error
 	followedArtistsFn func(context.Context, int, string) ([]Item, int, string, error)
+	artistTopTracksFn func(context.Context, string, int) ([]Item, error)
 }
 
 func (a apiStub) Search(ctx context.Context, kind, query string, limit, offset int) (SearchResult, error) {
@@ -109,6 +110,14 @@ func (a apiStub) Devices(ctx context.Context) ([]Device, error) {
 	a.note("Devices")
 	if a.devicesFn != nil {
 		return a.devicesFn(ctx)
+	}
+	return nil, nil
+}
+
+func (a apiStub) ArtistTopTracks(ctx context.Context, id string, limit int) ([]Item, error) {
+	a.note("ArtistTopTracks")
+	if a.artistTopTracksFn != nil {
+		return a.artistTopTracksFn(ctx, id, limit)
 	}
 	return nil, nil
 }
@@ -220,6 +229,29 @@ func TestFallbackPlaybackOnRateLimit(t *testing.T) {
 	}
 	if webCalls != 1 || connectCalls != 1 {
 		t.Fatalf("unexpected call counts web=%d connect=%d", webCalls, connectCalls)
+	}
+}
+
+func TestFallbackArtistTopTracksOnRateLimit(t *testing.T) {
+	ctx := context.Background()
+	web := apiStub{
+		artistTopTracksFn: func(context.Context, string, int) ([]Item, error) {
+			return nil, APIError{Status: 429, Message: "rate limit"}
+		},
+	}
+	connect := apiStub{
+		artistTopTracksFn: func(context.Context, string, int) ([]Item, error) {
+			return []Item{{URI: "spotify:track:1"}}, nil
+		},
+	}
+	client := NewPlaybackFallbackClient(web, connect)
+	fallback, ok := client.(artistTopTracksAPI)
+	if !ok {
+		t.Fatalf("expected artist top tracks support")
+	}
+	items, err := fallback.ArtistTopTracks(ctx, "abc", 1)
+	if err != nil || len(items) != 1 {
+		t.Fatalf("artist top tracks: %v %#v", err, items)
 	}
 }
 

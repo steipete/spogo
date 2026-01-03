@@ -7,6 +7,7 @@
 - Search across tracks, albums, artists, playlists, shows, episodes
 - Item info commands for track/album/artist/playlist/show/episode
 - Playback control: play/pause/next/prev/seek/volume/shuffle/repeat/status
+- Artist play uses top tracks (fallback via search)
 - Queue add/show
 - Library management for tracks/albums/artists/playlists
 - Playlist management: create/add/remove/track list

@@ -155,3 +155,7 @@ type artistsContainer struct {
 	Limit  int          `json:"limit"`
 	Offset int          `json:"offset"`
 }
+
+type artistTopTracksResponse struct {
+	Tracks []trackItem `json:"tracks"`
+}

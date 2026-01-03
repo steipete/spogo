@@ -130,6 +130,35 @@ func TestAutoNoFallbackOnGenericError(t *testing.T) {
 	}
 }
 
+func TestAutoArtistTopTracksFallback(t *testing.T) {
+	ctx := context.Background()
+	calls := map[string]int{}
+	connect := apiStub{
+		calls: calls,
+		artistTopTracksFn: func(context.Context, string, int) ([]Item, error) {
+			return nil, ErrUnsupported
+		},
+	}
+	web := apiStub{
+		calls: calls,
+		artistTopTracksFn: func(context.Context, string, int) ([]Item, error) {
+			return []Item{{URI: "spotify:track:1"}}, nil
+		},
+	}
+	client := NewAutoClient(connect, web)
+	auto, ok := client.(artistTopTracksAPI)
+	if !ok {
+		t.Fatalf("expected artist top tracks support")
+	}
+	items, err := auto.ArtistTopTracks(ctx, "abc", 1)
+	if err != nil || len(items) != 1 {
+		t.Fatalf("artist top tracks: %v %#v", err, items)
+	}
+	if calls["ArtistTopTracks"] != 2 {
+		t.Fatalf("expected fallback calls, got %d", calls["ArtistTopTracks"])
+	}
+}
+
 func TestAutoPassThrough(t *testing.T) {
 	ctx := context.Background()
 	connectCalls := map[string]int{}

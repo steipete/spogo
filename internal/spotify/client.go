@@ -137,6 +137,27 @@ func (c *Client) GetEpisode(ctx context.Context, id string) (Item, error) {
 	return mapEpisode(raw), nil
 }
 
+func (c *Client) ArtistTopTracks(ctx context.Context, id string, limit int) ([]Item, error) {
+	params := url.Values{}
+	market := c.market
+	if market == "" {
+		market = "US"
+	}
+	params.Set("market", market)
+	var raw artistTopTracksResponse
+	if err := c.get(ctx, "/artists/"+id+"/top-tracks", params, &raw); err != nil {
+		return nil, err
+	}
+	if limit <= 0 || limit > len(raw.Tracks) {
+		limit = len(raw.Tracks)
+	}
+	items := make([]Item, 0, limit)
+	for i := 0; i < limit; i++ {
+		items = append(items, mapTrack(raw.Tracks[i]))
+	}
+	return items, nil
+}
+
 func (c *Client) Playback(ctx context.Context) (PlaybackStatus, error) {
 	var raw playbackResponse
 	if err := c.get(ctx, "/me/player", nil, &raw); err != nil {

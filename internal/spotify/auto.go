@@ -61,6 +61,19 @@ func (c *autoClient) Search(ctx context.Context, kind, query string, limit, offs
 	})
 }
 
+func (c *autoClient) ArtistTopTracks(ctx context.Context, id string, limit int) ([]Item, error) {
+	if primary, ok := c.primary.(artistTopTracksAPI); ok {
+		items, err := primary.ArtistTopTracks(ctx, id, limit)
+		if err == nil || c.secondary == nil || !c.shouldFallback(err) {
+			return items, err
+		}
+	}
+	if secondary, ok := c.secondary.(artistTopTracksAPI); ok {
+		return secondary.ArtistTopTracks(ctx, id, limit)
+	}
+	return nil, ErrUnsupported
+}
+
 func (c *autoClient) GetTrack(ctx context.Context, id string) (Item, error) {
 	return autoCall(c, func(api API) (Item, error) {
 		return api.GetTrack(ctx, id)

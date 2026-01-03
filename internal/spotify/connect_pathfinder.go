@@ -220,6 +220,14 @@ func (c *ConnectClient) episodeInfo(ctx context.Context, id string) (Item, error
 	return web.GetEpisode(ctx, id)
 }
 
+func (c *ConnectClient) ArtistTopTracks(ctx context.Context, id string, limit int) ([]Item, error) {
+	web, err := c.webClient()
+	if err != nil {
+		return nil, err
+	}
+	return web.ArtistTopTracks(ctx, id, limit)
+}
+
 func (c *ConnectClient) infoByOperation(ctx context.Context, operation string, variables map[string]any, kind string) (Item, error) {
 	payload, err := c.graphQL(ctx, operation, variables)
 	if err != nil {
