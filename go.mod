@@ -13,7 +13,7 @@ require (
 	mvdan.cc/gofumpt v0.9.2
 )
 
-replace github.com/steipete/sweetcookie => /Users/steipete/Projects/gookie
+replace github.com/steipete/sweetcookie => /Users/steipete/Projects/sweetcookie
 
 require (
 	al.essio.dev/pkg/shellescape v1.6.0 // indirect

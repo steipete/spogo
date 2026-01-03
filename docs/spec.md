@@ -113,6 +113,11 @@ spogo [global flags] <command> [args]
 - `--plain`: stable, line-oriented, tab-separated fields.
 - `--json`: stable, documented keys per command.
 
+## Engines
+
+- `connect`: internal connect-state endpoints for playback; GraphQL for search/info.
+- `web`: Web API endpoints; playback auto-fallback to connect when rate limited.
+
 ## Exit codes
 
 - `0` success

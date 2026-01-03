@@ -128,7 +128,7 @@ func (c *Context) Spotify() (spotify.API, error) {
 		provider := spotify.CookieTokenProvider{
 			Source: source,
 		}
-		client, err := spotify.NewClient(spotify.Options{
+		webClient, err := spotify.NewClient(spotify.Options{
 			TokenProvider: provider,
 			Market:        c.Profile.Market,
 			Language:      c.Profile.Language,
@@ -137,6 +137,16 @@ func (c *Context) Spotify() (spotify.API, error) {
 		})
 		if err != nil {
 			return nil, err
+		}
+		client := spotify.API(webClient)
+		if connectClient, connectErr := spotify.NewConnectClient(spotify.ConnectOptions{
+			Source:   source,
+			Market:   c.Profile.Market,
+			Language: c.Profile.Language,
+			Device:   c.Profile.Device,
+			Timeout:  c.Settings.Timeout,
+		}); connectErr == nil {
+			client = spotify.NewPlaybackFallbackClient(webClient, connectClient)
 		}
 		c.spotifyClient = client
 		return client, nil
