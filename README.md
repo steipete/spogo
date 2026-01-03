@@ -29,6 +29,14 @@ Import your cookies once with `sweetcookie` and you're good to go (defaults to C
 
 ## Install
 
+### Homebrew
+
+```bash
+brew install steipete/tap/spogo
+```
+
+### Build from Source
+
 ```bash
 go install github.com/steipete/spogo/cmd/spogo@latest
 ```
