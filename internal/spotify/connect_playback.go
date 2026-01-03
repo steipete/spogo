@@ -392,6 +392,11 @@ func (c *ConnectClient) sendPlayerCommand(ctx context.Context, state connectStat
 	}
 	fromID := state.originDeviceID
 	if fromID == "" {
+		c.session.mu.Lock()
+		fromID = c.session.connectDeviceID
+		c.session.mu.Unlock()
+	}
+	if fromID == "" {
 		fromID = state.activeDeviceID
 	}
 	if fromID == "" || state.activeDeviceID == "" {
