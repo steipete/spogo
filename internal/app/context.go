@@ -175,8 +175,29 @@ func (c *Context) Spotify() (spotify.API, error) {
 		}
 		c.spotifyClient = client
 		return client, nil
+	case "applescript":
+		var fallback spotify.API
+		if webClient, webErr := spotify.NewClient(spotify.Options{
+			TokenProvider: spotify.CookieTokenProvider{
+				Source: source,
+			},
+			Market:   c.Profile.Market,
+			Language: c.Profile.Language,
+			Device:   c.Profile.Device,
+			Timeout:  c.Settings.Timeout,
+		}); webErr == nil {
+			fallback = webClient
+		}
+		client, err := spotify.NewAppleScriptClient(spotify.AppleScriptOptions{
+			Fallback: fallback,
+		})
+		if err != nil {
+			return nil, err
+		}
+		c.spotifyClient = client
+		return client, nil
 	default:
-		return nil, fmt.Errorf("unknown engine %q (use auto, web, or connect)", engine)
+		return nil, fmt.Errorf("unknown engine %q (use auto, web, connect, or applescript)", engine)
 	}
 }
 
