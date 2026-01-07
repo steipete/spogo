@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 - Unreleased
+## 0.2.0 - Unreleased
 
 - Add `applescript` engine for direct Spotify.app control on macOS (thanks @adam91holt)
 - CI: bump golangci-lint-action to support golangci-lint v2
