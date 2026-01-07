@@ -1,3 +1,4 @@
+//go:build !darwin
 // +build !darwin
 
 package spotify
@@ -12,6 +13,6 @@ type AppleScriptOptions struct {
 	Fallback API
 }
 
-func NewAppleScriptClient(opts AppleScriptOptions) (*AppleScriptClient, error) {
+func NewAppleScriptClient(opts AppleScriptOptions) (API, error) {
 	return nil, errors.New("applescript engine is only available on macOS")
 }

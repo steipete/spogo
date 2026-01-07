@@ -1,3 +1,4 @@
+//go:build darwin
 // +build darwin
 
 package spotify
@@ -18,17 +19,21 @@ type AppleScriptOptions struct {
 	Fallback API
 }
 
-func NewAppleScriptClient(opts AppleScriptOptions) (*AppleScriptClient, error) {
+func NewAppleScriptClient(opts AppleScriptOptions) (API, error) {
 	return &AppleScriptClient{
 		fallback: opts.Fallback,
 	}, nil
 }
 
-func (c *AppleScriptClient) runScript(script string) (string, error) {
-	cmd := exec.Command("osascript", "-e", script)
-	out, err := cmd.Output()
+func (c *AppleScriptClient) runScript(ctx context.Context, script string) (string, error) {
+	cmd := exec.CommandContext(ctx, "osascript", "-e", script)
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("applescript error: %w", err)
+		msg := strings.TrimSpace(string(out))
+		if msg == "" {
+			return "", fmt.Errorf("applescript error: %w", err)
+		}
+		return "", fmt.Errorf("applescript error: %w (%s)", err, msg)
 	}
 	return strings.TrimSpace(string(out)), nil
 }
@@ -40,35 +45,35 @@ func (c *AppleScriptClient) Play(ctx context.Context, uri string) error {
 	} else {
 		script = fmt.Sprintf(`tell application "Spotify" to play track "%s"`, uri)
 	}
-	_, err := c.runScript(script)
+	_, err := c.runScript(ctx, script)
 	return err
 }
 
 func (c *AppleScriptClient) Pause(ctx context.Context) error {
-	_, err := c.runScript(`tell application "Spotify" to pause`)
+	_, err := c.runScript(ctx, `tell application "Spotify" to pause`)
 	return err
 }
 
 func (c *AppleScriptClient) Next(ctx context.Context) error {
-	_, err := c.runScript(`tell application "Spotify" to next track`)
+	_, err := c.runScript(ctx, `tell application "Spotify" to next track`)
 	return err
 }
 
 func (c *AppleScriptClient) Previous(ctx context.Context) error {
-	_, err := c.runScript(`tell application "Spotify" to previous track`)
+	_, err := c.runScript(ctx, `tell application "Spotify" to previous track`)
 	return err
 }
 
 func (c *AppleScriptClient) Seek(ctx context.Context, positionMS int) error {
 	positionSec := positionMS / 1000
 	script := fmt.Sprintf(`tell application "Spotify" to set player position to %d`, positionSec)
-	_, err := c.runScript(script)
+	_, err := c.runScript(ctx, script)
 	return err
 }
 
 func (c *AppleScriptClient) Volume(ctx context.Context, volume int) error {
 	script := fmt.Sprintf(`tell application "Spotify" to set sound volume to %d`, volume)
-	_, err := c.runScript(script)
+	_, err := c.runScript(ctx, script)
 	return err
 }
 
@@ -78,7 +83,7 @@ func (c *AppleScriptClient) Shuffle(ctx context.Context, enabled bool) error {
 		val = "true"
 	}
 	script := fmt.Sprintf(`tell application "Spotify" to set shuffling to %s`, val)
-	_, err := c.runScript(script)
+	_, err := c.runScript(ctx, script)
 	return err
 }
 
@@ -88,7 +93,7 @@ func (c *AppleScriptClient) Repeat(ctx context.Context, mode string) error {
 		val = "true"
 	}
 	script := fmt.Sprintf(`tell application "Spotify" to set repeating to %s`, val)
-	_, err := c.runScript(script)
+	_, err := c.runScript(ctx, script)
 	return err
 }
 
@@ -106,7 +111,7 @@ func (c *AppleScriptClient) Playback(ctx context.Context) (PlaybackStatus, error
 	set isRepeating to repeating
 	return trackName & "|||" & trackArtist & "|||" & trackAlbum & "|||" & trackID & "|||" & trackDuration & "|||" & playerPos & "|||" & playerState & "|||" & vol & "|||" & isShuffling & "|||" & isRepeating
 end tell`
-	out, err := c.runScript(script)
+	out, err := c.runScript(ctx, script)
 	if err != nil {
 		return PlaybackStatus{}, err
 	}

@@ -65,7 +65,7 @@ Global flags:
 - `--market <cc>` market country code
 - `--language <tag>` language/locale (default `en`)
 - `--device <name|id>` target device
-- `--engine <auto|web|connect>` API engine (default `connect`)
+- `--engine <auto|web|connect|applescript>` API engine (default `connect`, `applescript` is macOS-only)
 - `--json` / `--plain`
 - `--no-color`
 - `-q, --quiet` / `-v, --verbose` / `-d, --debug`
