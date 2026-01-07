@@ -1,4 +1,4 @@
-# spogo CLI spec (v0.1.0)
+# spogo CLI spec (v0.1.1)
 
 One-liner: Spotify power CLI using web cookies; search + playback control.
 Parser: Kong.
@@ -29,7 +29,7 @@ spogo [global flags] <command> [args]
 - `--market <cc>` default: account market or `US`
 - `--language <tag>` default: `en`
 - `--device <name|id>` default: active device
-- `--engine <auto|web|connect>` default: `connect`
+- `--engine <auto|web|connect|applescript>` default: `connect` (`applescript` is macOS-only)
 - `--no-input`
 
 ## Commands

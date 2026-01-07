@@ -10,7 +10,7 @@ import (
 	"github.com/steipete/spogo/internal/output"
 )
 
-const Version = "0.1.0"
+const Version = "0.1.1"
 
 func New() *CLI {
 	return &CLI{}
@@ -50,7 +50,7 @@ type Globals struct {
 	Market   string           `help:"Market country code." env:"SPOGO_MARKET"`
 	Language string           `help:"Language/locale." env:"SPOGO_LANGUAGE"`
 	Device   string           `help:"Device name or id." env:"SPOGO_DEVICE"`
-	Engine   string           `help:"Engine (auto|web|connect)." env:"SPOGO_ENGINE"`
+	Engine   string           `help:"Engine (auto|web|connect|applescript)." env:"SPOGO_ENGINE"`
 	JSON     bool             `help:"JSON output." env:"SPOGO_JSON"`
 	Plain    bool             `help:"Plain output." env:"SPOGO_PLAIN"`
 	NoColor  bool             `help:"Disable color output." env:"SPOGO_NO_COLOR"`
