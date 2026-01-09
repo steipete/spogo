@@ -15,6 +15,7 @@ builds:
       - linux_amd64
       - linux_arm64
       - windows_amd64
+      - windows_arm64
   - id: spogo_darwin
     main: ./cmd/spogo
     binary: spogo
