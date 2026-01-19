@@ -34,6 +34,66 @@ func TestNewContextLoadsProfile(t *testing.T) {
 	}
 }
 
+func TestNewContextDefaultPath(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", dir)
+
+	ctx, err := NewContext(Settings{})
+	if err != nil {
+		t.Fatalf("new context: %v", err)
+	}
+	want := filepath.Join(dir, "spogo", "config.toml")
+	if ctx.ConfigPath != want {
+		t.Fatalf("expected config path %q, got %q", want, ctx.ConfigPath)
+	}
+	if ctx.ProfileKey != "default" {
+		t.Fatalf("expected default profile, got %q", ctx.ProfileKey)
+	}
+}
+
+func TestNewContextAppliesSettingsOverrides(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+	cfg := config.Default()
+	cfg.SetProfile("default", config.Profile{
+		Market:             "DE",
+		Language:           "de",
+		Device:             "old",
+		Engine:             "web",
+		ConnectUserAgent:   "ua-old",
+		ConnectAppPlatform: "WebPlayer",
+		ConnectDeviceName:  "old-name",
+		ConnectDeviceModel: "old-model",
+	})
+	if err := config.Save(path, cfg); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+
+	ctx, err := NewContext(Settings{
+		ConfigPath:         path,
+		Market:             "US",
+		Language:           "en",
+		Device:             "new",
+		Engine:             "connect",
+		ConnectUserAgent:   "ua-new",
+		ConnectAppPlatform: "App",
+		ConnectDeviceName:  "spogo",
+		ConnectDeviceModel: "model",
+	})
+	if err != nil {
+		t.Fatalf("new context: %v", err)
+	}
+	if ctx.Profile.Market != "US" || ctx.Profile.Language != "en" || ctx.Profile.Device != "new" || ctx.Profile.Engine != "connect" {
+		t.Fatalf("settings not applied: %#v", ctx.Profile)
+	}
+	if ctx.Profile.ConnectUserAgent != "ua-new" || ctx.Profile.ConnectAppPlatform != "App" || ctx.Profile.ConnectDeviceName != "spogo" || ctx.Profile.ConnectDeviceModel != "model" {
+		t.Fatalf("connect overrides not applied: %#v", ctx.Profile)
+	}
+	if ctx.Output == nil || ctx.Output.Format != output.FormatHuman {
+		t.Fatalf("expected default human output")
+	}
+}
+
 func TestResolveCookiePath(t *testing.T) {
 	ctx := &Context{ConfigPath: "/tmp/spogo/config.toml", ProfileKey: "default"}
 	path := ctx.ResolveCookiePath()

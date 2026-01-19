@@ -26,6 +26,11 @@ type Profile struct {
 	Language       string `toml:"language"`
 	Device         string `toml:"device"`
 	Engine         string `toml:"engine"`
+
+	ConnectUserAgent   string `toml:"connect_user_agent"`
+	ConnectAppPlatform string `toml:"connect_app_platform"`
+	ConnectDeviceName  string `toml:"connect_device_name"`
+	ConnectDeviceModel string `toml:"connect_device_model"`
 }
 
 func DefaultPath() (string, error) {

@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	connectStateBase   = "https://gue1-spclient.spotify.com/connect-state/v1"
-	trackPlaybackBase  = "https://gue1-spclient.spotify.com/track-playback/v1"
-	connectionTTL      = 10 * time.Minute
-	connectDeviceName  = "spogo"
-	connectDeviceModel = "web_player"
+	connectStateBase          = "https://gue1-spclient.spotify.com/connect-state/v1"
+	trackPlaybackBase         = "https://gue1-spclient.spotify.com/track-playback/v1"
+	connectionTTL             = 10 * time.Minute
+	defaultConnectDeviceName  = "spogo"
+	defaultConnectDeviceModel = "web_player"
+	defaultConnectAppPlatform = "WebPlayer"
 )
 
 var dealerURL = "wss://dealer.spotify.com/"
@@ -67,17 +68,19 @@ func (c *ConnectClient) play(ctx context.Context, uri string) error {
 	if uri == "" {
 		return c.sendPlayerCommand(ctx, state, "resume", nil)
 	}
+	options := map[string]any{}
+	if isContextURI(uri) {
+		options["context_uri"] = uri
+	} else {
+		options["skip_to"] = map[string]any{"track_uri": uri}
+	}
 	payload := map[string]any{
 		"command": map[string]any{
 			"endpoint": "play",
 			"logging_params": map[string]any{
 				"command_id": randomHex(32),
 			},
-			"options": map[string]any{
-				"skip_to": map[string]any{
-					"track_uri": uri,
-				},
-			},
+			"options": options,
 		},
 	}
 	return c.sendPlayerCommand(ctx, state, "play", payload)
@@ -262,9 +265,9 @@ func (c *ConnectClient) connectState(ctx context.Context) (connectState, error) 
 	req.Header.Set("Authorization", "Bearer "+auth.AccessToken)
 	req.Header.Set("Client-Token", auth.ClientToken)
 	req.Header.Set("Spotify-App-Version", connectVersion(auth))
-	req.Header.Set("User-Agent", defaultUserAgent())
+	req.Header.Set("User-Agent", c.userAgentValue())
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("app-platform", "WebPlayer")
+	req.Header.Set("app-platform", c.appPlatformValue())
 	if connectionID != "" {
 		req.Header.Set("x-spotify-connection-id", connectionID)
 	}
@@ -309,7 +312,7 @@ func (c *ConnectClient) ensureConnectDevice(ctx context.Context, auth connectAut
 	if !needs {
 		return nil
 	}
-	connectionID, err := getConnectionID(ctx, auth.AccessToken)
+	connectionID, err := getConnectionID(ctx, auth.AccessToken, c.userAgentValue())
 	if err != nil {
 		return err
 	}
@@ -332,8 +335,8 @@ func (c *ConnectClient) registerDevice(ctx context.Context, auth connectAuth, co
 			"device_id":           deviceID,
 			"device_type":         "computer",
 			"brand":               "spotify",
-			"model":               connectDeviceModel,
-			"name":                connectDeviceName,
+			"model":               c.connectDeviceModelValue(),
+			"name":                c.connectDeviceNameValue(),
 			"is_group":            false,
 			"metadata":            map[string]any{},
 			"platform_identifier": fmt.Sprintf("web_player %s;spogo", runtime.GOOS),
@@ -365,9 +368,9 @@ func (c *ConnectClient) registerDevice(ctx context.Context, auth connectAuth, co
 	req.Header.Set("Authorization", "Bearer "+auth.AccessToken)
 	req.Header.Set("Client-Token", auth.ClientToken)
 	req.Header.Set("Spotify-App-Version", connectVersion(auth))
-	req.Header.Set("User-Agent", defaultUserAgent())
+	req.Header.Set("User-Agent", c.userAgentValue())
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("app-platform", "WebPlayer")
+	req.Header.Set("app-platform", c.appPlatformValue())
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -418,9 +421,9 @@ func (c *ConnectClient) sendConnectCommand(ctx context.Context, url string, payl
 	req.Header.Set("Authorization", "Bearer "+auth.AccessToken)
 	req.Header.Set("Client-Token", auth.ClientToken)
 	req.Header.Set("Spotify-App-Version", connectVersion(auth))
-	req.Header.Set("User-Agent", defaultUserAgent())
+	req.Header.Set("User-Agent", c.userAgentValue())
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("app-platform", "WebPlayer")
+	req.Header.Set("app-platform", c.appPlatformValue())
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -432,9 +435,12 @@ func (c *ConnectClient) sendConnectCommand(ctx context.Context, url string, payl
 	return nil
 }
 
-func getConnectionID(ctx context.Context, accessToken string) (string, error) {
+func getConnectionID(ctx context.Context, accessToken string, userAgent string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	if strings.TrimSpace(userAgent) == "" {
+		userAgent = defaultUserAgent()
+	}
 	url := dealerURL
 	sep := "?"
 	if strings.Contains(url, "?") {
@@ -446,7 +452,7 @@ func getConnectionID(ctx context.Context, accessToken string) (string, error) {
 	url += sep + "access_token=" + accessToken
 	conn, resp, err := websocket.Dial(ctx, url, &websocket.DialOptions{
 		HTTPHeader: http.Header{
-			"User-Agent": []string{defaultUserAgent()},
+			"User-Agent": []string{userAgent},
 		},
 	})
 	if err != nil {
@@ -479,4 +485,32 @@ func getConnectionID(ctx context.Context, accessToken string) (string, error) {
 		}
 	}
 	return "", errors.New("missing connection id")
+}
+
+func (c *ConnectClient) userAgentValue() string {
+	if strings.TrimSpace(c.userAgent) != "" {
+		return strings.TrimSpace(c.userAgent)
+	}
+	return defaultUserAgent()
+}
+
+func (c *ConnectClient) appPlatformValue() string {
+	if strings.TrimSpace(c.appPlatform) != "" {
+		return strings.TrimSpace(c.appPlatform)
+	}
+	return defaultConnectAppPlatform
+}
+
+func (c *ConnectClient) connectDeviceNameValue() string {
+	if strings.TrimSpace(c.deviceName) != "" {
+		return strings.TrimSpace(c.deviceName)
+	}
+	return defaultConnectDeviceName
+}
+
+func (c *ConnectClient) connectDeviceModelValue() string {
+	if strings.TrimSpace(c.deviceModel) != "" {
+		return strings.TrimSpace(c.deviceModel)
+	}
+	return defaultConnectDeviceModel
 }

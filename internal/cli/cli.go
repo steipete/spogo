@@ -44,21 +44,27 @@ type CLI struct {
 }
 
 type Globals struct {
-	Config   string           `help:"Config file path." env:"SPOGO_CONFIG"`
-	Profile  string           `help:"Profile name." env:"SPOGO_PROFILE"`
-	Timeout  time.Duration    `help:"HTTP timeout." env:"SPOGO_TIMEOUT" default:"10s"`
-	Market   string           `help:"Market country code." env:"SPOGO_MARKET"`
-	Language string           `help:"Language/locale." env:"SPOGO_LANGUAGE"`
-	Device   string           `help:"Device name or id." env:"SPOGO_DEVICE"`
-	Engine   string           `help:"Engine (auto|web|connect|applescript)." env:"SPOGO_ENGINE"`
-	JSON     bool             `help:"JSON output." env:"SPOGO_JSON"`
-	Plain    bool             `help:"Plain output." env:"SPOGO_PLAIN"`
-	NoColor  bool             `help:"Disable color output." env:"SPOGO_NO_COLOR"`
-	Quiet    bool             `short:"q" help:"Quiet output." env:"SPOGO_QUIET"`
-	Verbose  bool             `short:"v" help:"Verbose output." env:"SPOGO_VERBOSE"`
-	Debug    bool             `short:"d" help:"Debug output." env:"SPOGO_DEBUG"`
-	NoInput  bool             `help:"Disable prompts." env:"SPOGO_NO_INPUT"`
-	Version  kong.VersionFlag `help:"Print version."`
+	Config             string           `help:"Config file path." env:"SPOGO_CONFIG"`
+	Profile            string           `help:"Profile name." env:"SPOGO_PROFILE"`
+	Timeout            time.Duration    `help:"HTTP timeout." env:"SPOGO_TIMEOUT" default:"10s"`
+	Market             string           `help:"Market country code." env:"SPOGO_MARKET"`
+	Language           string           `help:"Language/locale." env:"SPOGO_LANGUAGE"`
+	Device             string           `help:"Device name or id." env:"SPOGO_DEVICE"`
+	Engine             string           `help:"Engine (auto|web|connect|applescript)." env:"SPOGO_ENGINE"`
+	ConnectUserAgent   string           `help:"Connect client User-Agent override." env:"SPOGO_CONNECT_USER_AGENT"`
+	ConnectAppPlatform string           `help:"Connect client app-platform override." env:"SPOGO_CONNECT_APP_PLATFORM"`
+	ConnectDeviceName  string           `help:"Connect client device name override." env:"SPOGO_CONNECT_DEVICE_NAME"`
+	ConnectDeviceModel string           `help:"Connect client device model override." env:"SPOGO_CONNECT_DEVICE_MODEL"`
+	VerifyPlayback     time.Duration    `help:"After play/transfer, poll playback for this duration; warn if stuck (progress_ms=0 or missing item/device)." env:"SPOGO_VERIFY_PLAYBACK" default:"0s"`
+	VerifyPlaybackFail bool             `help:"Exit non-zero if playback verification fails." env:"SPOGO_VERIFY_PLAYBACK_FAIL"`
+	JSON               bool             `help:"JSON output." env:"SPOGO_JSON"`
+	Plain              bool             `help:"Plain output." env:"SPOGO_PLAIN"`
+	NoColor            bool             `help:"Disable color output." env:"SPOGO_NO_COLOR"`
+	Quiet              bool             `short:"q" help:"Quiet output." env:"SPOGO_QUIET"`
+	Verbose            bool             `short:"v" help:"Verbose output." env:"SPOGO_VERBOSE"`
+	Debug              bool             `short:"d" help:"Debug output." env:"SPOGO_DEBUG"`
+	NoInput            bool             `help:"Disable prompts." env:"SPOGO_NO_INPUT"`
+	Version            kong.VersionFlag `help:"Print version."`
 }
 
 func (g Globals) Settings() (app.Settings, error) {
@@ -67,18 +73,25 @@ func (g Globals) Settings() (app.Settings, error) {
 		return app.Settings{}, err
 	}
 	return app.Settings{
-		ConfigPath: g.Config,
-		Profile:    g.Profile,
-		Timeout:    g.Timeout,
-		Market:     g.Market,
-		Language:   g.Language,
-		Device:     g.Device,
-		Engine:     g.Engine,
-		Format:     format,
-		NoColor:    g.NoColor,
-		Quiet:      g.Quiet,
-		Verbose:    g.Verbose,
-		Debug:      g.Debug,
+		ConfigPath:         g.Config,
+		Profile:            g.Profile,
+		Timeout:            g.Timeout,
+		Market:             g.Market,
+		Language:           g.Language,
+		Device:             g.Device,
+		Engine:             g.Engine,
+		ConnectUserAgent:   g.ConnectUserAgent,
+		ConnectAppPlatform: g.ConnectAppPlatform,
+		ConnectDeviceName:  g.ConnectDeviceName,
+		ConnectDeviceModel: g.ConnectDeviceModel,
+		VerifyPlayback:     g.VerifyPlayback,
+		VerifyPlaybackFail: g.VerifyPlaybackFail,
+		Format:             format,
+		NoColor:            g.NoColor,
+		Quiet:              g.Quiet,
+		Verbose:            g.Verbose,
+		Debug:              g.Debug,
+		NoInput:            g.NoInput,
 	}, nil
 }
 

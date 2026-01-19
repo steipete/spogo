@@ -66,6 +66,12 @@ Global flags:
 - `--language <tag>` language/locale (default `en`)
 - `--device <name|id>` target device
 - `--engine <auto|web|connect|applescript>` API engine (default `connect`, `applescript` is macOS-only)
+- `--connect-user-agent <ua>` connect client `User-Agent` override
+- `--connect-app-platform <name>` connect client `app-platform` override
+- `--connect-device-name <name>` connect device `name` override
+- `--connect-device-model <model>` connect device `model` override
+- `--verify-playback <dur>` after `play`/`device set`, poll playback for this duration; warn if stuck (progress_ms=0 or missing item/device)
+- `--verify-playback-fail` exit non-zero if playback verification fails
 - `--json` / `--plain`
 - `--no-color`
 - `-q, --quiet` / `-v, --verbose` / `-d, --debug`
@@ -74,6 +80,12 @@ Env overrides:
 
 - `SPOGO_TOTP_SECRET_URL` override TOTP secret source (http(s) or `file://...`)
 - `SPOGO_CONNECT_VERSION` override connect client version sent to playback endpoints
+- `SPOGO_CONNECT_USER_AGENT` override connect client `User-Agent`
+- `SPOGO_CONNECT_APP_PLATFORM` override connect client `app-platform`
+- `SPOGO_CONNECT_DEVICE_NAME` override connect device `name`
+- `SPOGO_CONNECT_DEVICE_MODEL` override connect device `model`
+- `SPOGO_VERIFY_PLAYBACK` same as `--verify-playback`
+- `SPOGO_VERIFY_PLAYBACK_FAIL` same as `--verify-playback-fail`
 
 Commands:
 
@@ -106,6 +118,18 @@ Defaults: Chrome + Default profile. Cookies are stored under your config directo
 
 - `connect` uses Spotify's internal connect-state endpoints for playback control.
 - Search/info prefer the internal GraphQL API and fall back to web search if hashes can’t be resolved.
+
+### Connect browser emulation
+
+You can override connect headers/device identity via flags or per-profile config:
+
+```toml
+[profile.default]
+connect_user_agent = "Mozilla/5.0 ..."
+connect_app_platform = "WebPlayer"
+connect_device_name = "spogo"
+connect_device_model = "web_player"
+```
 
 ## Web engine notes
 

@@ -111,6 +111,17 @@ func (w *Writer) Errorf(format string, args ...any) {
 	_, _ = fmt.Fprintln(w.Err, msg)
 }
 
+func (w *Writer) Warnf(format string, args ...any) {
+	if w == nil {
+		return
+	}
+	msg := fmt.Sprintf(format, args...)
+	if w.Color {
+		msg = w.Theme.Warn(msg)
+	}
+	_, _ = fmt.Fprintln(w.Err, msg)
+}
+
 func theme(enable bool) Theme {
 	if !enable {
 		return Theme{

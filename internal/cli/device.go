@@ -60,6 +60,9 @@ func (cmd *DeviceSetCmd) Run(ctx *app.Context) error {
 	if err := client.Transfer(context.Background(), id); err != nil {
 		return err
 	}
+	if err := verifyPlaybackAfterAction(ctx, client, "transfer"); err != nil {
+		return err
+	}
 	return ctx.Output.Emit(map[string]any{"status": "ok", "device": id}, []string{"ok"}, []string{fmt.Sprintf("Switched to %s", id)})
 }
 

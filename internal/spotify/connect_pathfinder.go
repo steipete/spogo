@@ -49,11 +49,11 @@ func (c *ConnectClient) graphQL(ctx context.Context, operation string, variables
 	req.Header.Set("Client-Token", auth.ClientToken)
 	req.Header.Set("Spotify-App-Version", auth.ClientVersion)
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", defaultUserAgent())
+	req.Header.Set("User-Agent", c.userAgentValue())
 	if c.language != "" {
 		req.Header.Set("Accept-Language", c.language)
 	}
-	req.Header.Set("app-platform", "WebPlayer")
+	req.Header.Set("app-platform", c.appPlatformValue())
 	client := c.searchClient
 	if client == nil {
 		client = c.client
@@ -272,8 +272,8 @@ func (c *ConnectClient) searchViaWebAPI(ctx context.Context, kind, query string,
 	req.Header.Set("Client-Token", auth.ClientToken)
 	req.Header.Set("Spotify-App-Version", auth.ClientVersion)
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", defaultUserAgent())
-	req.Header.Set("app-platform", "WebPlayer")
+	req.Header.Set("User-Agent", c.userAgentValue())
+	req.Header.Set("app-platform", c.appPlatformValue())
 	if c.language != "" {
 		req.Header.Set("Accept-Language", c.language)
 	}

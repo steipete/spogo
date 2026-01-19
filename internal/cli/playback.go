@@ -102,6 +102,9 @@ func (cmd *PlayCmd) Run(ctx *app.Context) error {
 	if err := client.Play(context.Background(), uri); err != nil {
 		return err
 	}
+	if err := verifyPlaybackAfterAction(ctx, client, "play"); err != nil {
+		return err
+	}
 	return ctx.Output.Emit(map[string]string{"status": "ok"}, []string{"ok"}, []string{"Playback started"})
 }
 

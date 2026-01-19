@@ -15,18 +15,25 @@ import (
 )
 
 type Settings struct {
-	ConfigPath string
-	Profile    string
-	Timeout    time.Duration
-	Market     string
-	Language   string
-	Device     string
-	Engine     string
-	Format     output.Format
-	NoColor    bool
-	Quiet      bool
-	Verbose    bool
-	Debug      bool
+	ConfigPath         string
+	Profile            string
+	Timeout            time.Duration
+	Market             string
+	Language           string
+	Device             string
+	Engine             string
+	ConnectUserAgent   string
+	ConnectAppPlatform string
+	ConnectDeviceName  string
+	ConnectDeviceModel string
+	VerifyPlayback     time.Duration
+	VerifyPlaybackFail bool
+	Format             output.Format
+	NoColor            bool
+	Quiet              bool
+	Verbose            bool
+	Debug              bool
+	NoInput            bool
 }
 
 type Context struct {
@@ -72,6 +79,18 @@ func NewContext(settings Settings) (*Context, error) {
 	if settings.Engine != "" {
 		profile.Engine = settings.Engine
 	}
+	if settings.ConnectUserAgent != "" {
+		profile.ConnectUserAgent = settings.ConnectUserAgent
+	}
+	if settings.ConnectAppPlatform != "" {
+		profile.ConnectAppPlatform = settings.ConnectAppPlatform
+	}
+	if settings.ConnectDeviceName != "" {
+		profile.ConnectDeviceName = settings.ConnectDeviceName
+	}
+	if settings.ConnectDeviceModel != "" {
+		profile.ConnectDeviceModel = settings.ConnectDeviceModel
+	}
 	format := settings.Format
 	if format == "" {
 		format = output.FormatHuman
@@ -113,11 +132,15 @@ func (c *Context) Spotify() (spotify.API, error) {
 	switch engine {
 	case "connect":
 		client, err := spotify.NewConnectClient(spotify.ConnectOptions{
-			Source:   source,
-			Market:   c.Profile.Market,
-			Language: c.Profile.Language,
-			Device:   c.Profile.Device,
-			Timeout:  c.Settings.Timeout,
+			Source:      source,
+			Market:      c.Profile.Market,
+			Language:    c.Profile.Language,
+			Device:      c.Profile.Device,
+			Timeout:     c.Settings.Timeout,
+			UserAgent:   c.Profile.ConnectUserAgent,
+			AppPlatform: c.Profile.ConnectAppPlatform,
+			DeviceName:  c.Profile.ConnectDeviceName,
+			DeviceModel: c.Profile.ConnectDeviceModel,
 		})
 		if err != nil {
 			return nil, err
@@ -140,11 +163,15 @@ func (c *Context) Spotify() (spotify.API, error) {
 		}
 		client := spotify.API(webClient)
 		if connectClient, connectErr := spotify.NewConnectClient(spotify.ConnectOptions{
-			Source:   source,
-			Market:   c.Profile.Market,
-			Language: c.Profile.Language,
-			Device:   c.Profile.Device,
-			Timeout:  c.Settings.Timeout,
+			Source:      source,
+			Market:      c.Profile.Market,
+			Language:    c.Profile.Language,
+			Device:      c.Profile.Device,
+			Timeout:     c.Settings.Timeout,
+			UserAgent:   c.Profile.ConnectUserAgent,
+			AppPlatform: c.Profile.ConnectAppPlatform,
+			DeviceName:  c.Profile.ConnectDeviceName,
+			DeviceModel: c.Profile.ConnectDeviceModel,
 		}); connectErr == nil {
 			client = spotify.NewPlaybackFallbackClient(webClient, connectClient)
 		}
@@ -165,11 +192,15 @@ func (c *Context) Spotify() (spotify.API, error) {
 		}
 		client := spotify.API(webClient)
 		if connectClient, connectErr := spotify.NewConnectClient(spotify.ConnectOptions{
-			Source:   source,
-			Market:   c.Profile.Market,
-			Language: c.Profile.Language,
-			Device:   c.Profile.Device,
-			Timeout:  c.Settings.Timeout,
+			Source:      source,
+			Market:      c.Profile.Market,
+			Language:    c.Profile.Language,
+			Device:      c.Profile.Device,
+			Timeout:     c.Settings.Timeout,
+			UserAgent:   c.Profile.ConnectUserAgent,
+			AppPlatform: c.Profile.ConnectAppPlatform,
+			DeviceName:  c.Profile.ConnectDeviceName,
+			DeviceModel: c.Profile.ConnectDeviceModel,
 		}); connectErr == nil {
 			client = spotify.NewAutoClient(connectClient, webClient)
 		}

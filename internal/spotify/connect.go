@@ -17,6 +17,11 @@ type ConnectOptions struct {
 	Language string
 	Device   string
 	Timeout  time.Duration
+
+	UserAgent   string
+	AppPlatform string
+	DeviceName  string
+	DeviceModel string
 }
 
 type ConnectClient struct {
@@ -24,6 +29,10 @@ type ConnectClient struct {
 	market       string
 	language     string
 	device       string
+	userAgent    string
+	appPlatform  string
+	deviceName   string
+	deviceModel  string
 	client       *http.Client
 	session      *connectSession
 	hashes       *hashResolver
@@ -51,6 +60,10 @@ func NewConnectClient(opts ConnectOptions) (*ConnectClient, error) {
 		market:   opts.Market,
 		language: opts.Language,
 		device:   opts.Device,
+		userAgent:   opts.UserAgent,
+		appPlatform: opts.AppPlatform,
+		deviceName:  opts.DeviceName,
+		deviceModel: opts.DeviceModel,
 		client:   httpClient,
 		session:  session,
 		hashes:   newHashResolver(httpClient, session),

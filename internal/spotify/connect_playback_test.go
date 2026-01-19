@@ -3,6 +3,7 @@ package spotify
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -99,6 +100,56 @@ func TestConnectPlaybackCommands(t *testing.T) {
 	}
 }
 
+func TestConnectPlaybackOverridesHeaders(t *testing.T) {
+	transport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		if req.Header.Get("User-Agent") != "MyUA" {
+			t.Fatalf("User-Agent = %q", req.Header.Get("User-Agent"))
+		}
+		if req.Header.Get("app-platform") != "MyPlatform" {
+			t.Fatalf("app-platform = %q", req.Header.Get("app-platform"))
+		}
+		return textResponse(http.StatusOK, "ok"), nil
+	})
+	client := newConnectClientForTests(transport)
+	client.userAgent = "MyUA"
+	client.appPlatform = "MyPlatform"
+	if err := client.sendConnectCommand(context.Background(), "https://example.com", map[string]any{}); err != nil {
+		t.Fatalf("sendConnectCommand: %v", err)
+	}
+}
+
+func TestConnectPlaybackOverridesDeviceInfo(t *testing.T) {
+	transport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			t.Fatalf("read body: %v", err)
+		}
+		var payload map[string]any
+		if err := json.Unmarshal(body, &payload); err != nil {
+			t.Fatalf("parse json: %v", err)
+		}
+		device, _ := payload["device"].(map[string]any)
+		if device["name"] != "MyDevice" {
+			t.Fatalf("device.name = %#v", device["name"])
+		}
+		if device["model"] != "MyModel" {
+			t.Fatalf("device.model = %#v", device["model"])
+		}
+		return textResponse(http.StatusOK, "ok"), nil
+	})
+	client := newConnectClientForTests(transport)
+	client.session.connectDeviceID = "device"
+	client.deviceName = "MyDevice"
+	client.deviceModel = "MyModel"
+	if err := client.registerDevice(context.Background(), connectAuth{
+		AccessToken:   "access",
+		ClientToken:   "ct",
+		ClientVersion: "1.0.0",
+	}, "conn"); err != nil {
+		t.Fatalf("registerDevice: %v", err)
+	}
+}
+
 func TestConnectPlaybackActiveDeviceFromDevices(t *testing.T) {
 	statePayload := map[string]any{
 		"devices": map[string]any{
@@ -192,7 +243,7 @@ func TestGetConnectionID(t *testing.T) {
 	dealerURL = "ws" + strings.TrimPrefix(srv.URL, "http")
 	t.Cleanup(func() { dealerURL = prev })
 
-	id, err := getConnectionID(context.Background(), "token")
+	id, err := getConnectionID(context.Background(), "token", "")
 	if err != nil {
 		t.Fatalf("getConnectionID: %v", err)
 	}
@@ -271,7 +322,7 @@ func TestGetConnectionIDMissingHeader(t *testing.T) {
 	dealerURL = "ws" + strings.TrimPrefix(srv.URL, "http")
 	t.Cleanup(func() { dealerURL = prev })
 
-	if _, err := getConnectionID(context.Background(), "token"); err == nil {
+	if _, err := getConnectionID(context.Background(), "token", ""); err == nil {
 		t.Fatalf("expected error")
 	}
 }
@@ -297,7 +348,7 @@ func TestGetConnectionIDBadHeadersType(t *testing.T) {
 	dealerURL = "ws" + strings.TrimPrefix(srv.URL, "http")
 	t.Cleanup(func() { dealerURL = prev })
 
-	if _, err := getConnectionID(context.Background(), "token"); err == nil {
+	if _, err := getConnectionID(context.Background(), "token", ""); err == nil {
 		t.Fatalf("expected error")
 	}
 }
@@ -307,7 +358,7 @@ func TestGetConnectionIDDialError(t *testing.T) {
 	dealerURL = "ws://127.0.0.1:1"
 	t.Cleanup(func() { dealerURL = prev })
 
-	if _, err := getConnectionID(context.Background(), "token"); err == nil {
+	if _, err := getConnectionID(context.Background(), "token", ""); err == nil {
 		t.Fatalf("expected error")
 	}
 }
@@ -329,7 +380,7 @@ func TestGetConnectionIDBadJSON(t *testing.T) {
 	dealerURL = "ws" + strings.TrimPrefix(srv.URL, "http")
 	t.Cleanup(func() { dealerURL = prev })
 
-	if _, err := getConnectionID(context.Background(), "token"); err == nil {
+	if _, err := getConnectionID(context.Background(), "token", ""); err == nil {
 		t.Fatalf("expected error")
 	}
 }

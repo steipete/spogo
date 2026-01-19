@@ -26,10 +26,16 @@ spogo [global flags] <command> [args]
 - `--config <path>` default: `os.UserConfigDir()/spogo/config.toml`
 - `--profile <name>` default: `default`
 - `--timeout <dur>` default: `10s`
+- `--verify-playback <dur>` default: `0s`
+- `--verify-playback-fail`
 - `--market <cc>` default: account market or `US`
 - `--language <tag>` default: `en`
 - `--device <name|id>` default: active device
 - `--engine <auto|web|connect|applescript>` default: `connect` (`applescript` is macOS-only)
+- `--connect-user-agent <ua>` override connect client `User-Agent`
+- `--connect-app-platform <name>` override connect client `app-platform`
+- `--connect-device-name <name>` override connect device `name`
+- `--connect-device-model <model>` override connect device `model`
 - `--no-input`
 
 ## Commands
@@ -127,6 +133,7 @@ spogo [global flags] <command> [args]
 - `2` invalid usage/validation
 - `3` auth/cookies missing or invalid
 - `4` network/timeouts
+- `5` playback verification failed (`--verify-playback-fail`)
 
 ## Config / env
 
@@ -136,6 +143,12 @@ spogo [global flags] <command> [args]
 - Overrides:
   - `SPOGO_TOTP_SECRET_URL` (http(s) or `file://...`)
   - `SPOGO_CONNECT_VERSION` (connect playback client version)
+  - `SPOGO_CONNECT_USER_AGENT` (connect client `User-Agent`)
+  - `SPOGO_CONNECT_APP_PLATFORM` (connect client `app-platform`)
+  - `SPOGO_CONNECT_DEVICE_NAME` (connect device `name`)
+  - `SPOGO_CONNECT_DEVICE_MODEL` (connect device `model`)
+  - `SPOGO_VERIFY_PLAYBACK` (playback verification duration)
+  - `SPOGO_VERIFY_PLAYBACK_FAIL` (exit non-zero on verification failure)
 
 ## Examples
 
