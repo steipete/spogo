@@ -77,7 +77,7 @@ Env overrides:
 
 Commands:
 
-- `auth status|import|clear`
+- `auth status|import|paste|clear`
 - `search track|album|artist|playlist|show|episode`
 - `track info`, `album info`, `artist info`, `playlist info`, `show info`, `episode info`
 - `play [<id|url>] [--type ...] [--shuffle]`, `pause`, `next`, `prev`, `seek`, `volume`, `shuffle`, `repeat`, `status`
@@ -97,6 +97,24 @@ spogo auth import --browser chrome
 ```
 
 Defaults: Chrome + Default profile. Cookies are stored under your config directory (per profile).
+
+### Manual cookie paste (WSL fallback)
+
+If WSL cookie import/decryption is broken, paste cookies from Chrome DevTools:
+
+1) Developer Tools -> Application tab -> Cookies -> `https://open.spotify.com`
+2) Copy `sp_dc` (required), `sp_key` (optional), `sp_t` (recommended for connect playback)
+3) Run:
+
+```bash
+spogo auth paste
+```
+
+Non-interactive:
+
+```bash
+printf '%s\n%s\n' "sp_dc=..." "sp_t=..." | spogo auth paste --no-input
+```
 
 ## Auto engine notes
 

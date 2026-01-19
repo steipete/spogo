@@ -28,6 +28,7 @@ type Settings struct {
 	Quiet      bool
 	Verbose    bool
 	Debug      bool
+	NoInput    bool
 }
 
 type Context struct {

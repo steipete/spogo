@@ -42,6 +42,11 @@ spogo [global flags] <command> [args]
   - `--browser-profile <name>`
   - `--cookie-path <file>`
   - `--domain <host>` default `spotify.com`
+- `spogo auth paste`
+  - reads cookie values from stdin (prompts when interactive)
+  - `--cookie-path <file>`
+  - `--domain <suffix>` default `spotify.com`
+  - `--path <path>` default `/`
 - `spogo auth clear`
 
 ### search

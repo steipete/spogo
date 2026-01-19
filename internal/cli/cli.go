@@ -79,6 +79,7 @@ func (g Globals) Settings() (app.Settings, error) {
 		Quiet:      g.Quiet,
 		Verbose:    g.Verbose,
 		Debug:      g.Debug,
+		NoInput:    g.NoInput,
 	}, nil
 }
 

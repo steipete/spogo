@@ -100,7 +100,7 @@ func (s *connectSession) ensureAppConfigLocked(ctx context.Context) error {
 		}
 	}
 	if deviceID == "" {
-		return errors.New("missing sp_t cookie")
+		return errors.New("missing sp_t cookie (run `spogo auth paste` and include sp_t from DevTools)")
 	}
 	jar, err := cookiejar.New(nil)
 	if err != nil {
