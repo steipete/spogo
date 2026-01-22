@@ -144,6 +144,7 @@ func TestExtractItemOtherArtistsItems(t *testing.T) {
 		t.Fatalf("unexpected artists: %#v", item.Artists)
 	}
 }
+
 func TestExtractItemFromPayloadPrefersTrackUnion(t *testing.T) {
 	payload := map[string]any{
 		"data": map[string]any{
@@ -180,6 +181,23 @@ func TestExtractItemFromPayloadPrefersTrackUnion(t *testing.T) {
 	}
 	if item.ID != "primary" || len(item.Artists) != 1 || item.Artists[0] != "Main Artist" {
 		t.Fatalf("unexpected item: %#v", item)
+	}
+}
+
+func TestExtractItemArtistsIDName(t *testing.T) {
+	raw := map[string]any{
+		"uri":  "spotify:track:abc",
+		"name": "Song",
+		"artists": []any{
+			map[string]any{"id": "ar1", "name": "Artist One"},
+		},
+	}
+	item, ok := extractItem(raw, "track")
+	if !ok {
+		t.Fatalf("expected item")
+	}
+	if len(item.Artists) != 1 || item.Artists[0] != "Artist One" {
+		t.Fatalf("unexpected artists: %#v", item.Artists)
 	}
 }
 
