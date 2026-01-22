@@ -62,6 +62,127 @@ func TestExtractItemFallbacks(t *testing.T) {
 	}
 }
 
+func TestExtractItemArtistsContainers(t *testing.T) {
+	raw := map[string]any{
+		"uri":  "spotify:track:abc",
+		"name": "Song",
+		"artists": map[string]any{
+			"items": []any{
+				map[string]any{"name": "Artist One"},
+				map[string]any{"name": "Artist Two"},
+			},
+		},
+	}
+	item, ok := extractItem(raw, "track")
+	if !ok {
+		t.Fatalf("expected item")
+	}
+	if len(item.Artists) != 2 || item.Artists[0] != "Artist One" || item.Artists[1] != "Artist Two" {
+		t.Fatalf("unexpected artists: %#v", item.Artists)
+	}
+}
+
+func TestExtractItemArtistsEdges(t *testing.T) {
+	raw := map[string]any{
+		"uri":  "spotify:track:abc",
+		"name": "Song",
+		"artists": map[string]any{
+			"edges": []any{
+				map[string]any{"node": map[string]any{"name": "Artist One"}},
+				map[string]any{"node": map[string]any{"name": "Artist Two"}},
+			},
+		},
+	}
+	item, ok := extractItem(raw, "track")
+	if !ok {
+		t.Fatalf("expected item")
+	}
+	if len(item.Artists) != 2 || item.Artists[0] != "Artist One" || item.Artists[1] != "Artist Two" {
+		t.Fatalf("unexpected artists: %#v", item.Artists)
+	}
+}
+
+func TestExtractItemFirstArtistItems(t *testing.T) {
+	raw := map[string]any{
+		"uri":  "spotify:track:abc",
+		"name": "Song",
+		"firstArtist": map[string]any{
+			"items": []any{
+				map[string]any{"profile": map[string]any{"name": "Artist One"}},
+			},
+		},
+	}
+	item, ok := extractItem(raw, "track")
+	if !ok {
+		t.Fatalf("expected item")
+	}
+	if len(item.Artists) != 1 || item.Artists[0] != "Artist One" {
+		t.Fatalf("unexpected artists: %#v", item.Artists)
+	}
+}
+
+func TestExtractItemOtherArtistsItems(t *testing.T) {
+	raw := map[string]any{
+		"uri":  "spotify:track:abc",
+		"name": "Song",
+		"firstArtist": map[string]any{
+			"items": []any{
+				map[string]any{"profile": map[string]any{"name": "Artist One"}},
+			},
+		},
+		"otherArtists": map[string]any{
+			"items": []any{
+				map[string]any{"profile": map[string]any{"name": "Artist Two"}},
+			},
+		},
+	}
+	item, ok := extractItem(raw, "track")
+	if !ok {
+		t.Fatalf("expected item")
+	}
+	if len(item.Artists) != 2 || item.Artists[0] != "Artist One" || item.Artists[1] != "Artist Two" {
+		t.Fatalf("unexpected artists: %#v", item.Artists)
+	}
+}
+func TestExtractItemFromPayloadPrefersTrackUnion(t *testing.T) {
+	payload := map[string]any{
+		"data": map[string]any{
+			"trackUnion": map[string]any{
+				"uri":  "spotify:track:primary",
+				"name": "Primary",
+				"artists": []any{
+					map[string]any{"name": "Main Artist"},
+				},
+			},
+			"track": map[string]any{
+				"uri":  "spotify:track:secondary",
+				"name": "Secondary",
+				"artists": []any{
+					map[string]any{"name": "Wrong Artist"},
+				},
+			},
+			"other": map[string]any{
+				"items": []any{
+					map[string]any{
+						"uri":  "spotify:track:secondary",
+						"name": "Secondary",
+						"artists": []any{
+							map[string]any{"name": "Wrong Artist"},
+						},
+					},
+				},
+			},
+		},
+	}
+	item, ok := extractItemFromPayload(payload, "track")
+	if !ok {
+		t.Fatalf("expected item")
+	}
+	if item.ID != "primary" || len(item.Artists) != 1 || item.Artists[0] != "Main Artist" {
+		t.Fatalf("unexpected item: %#v", item)
+	}
+}
+
 func TestExtractSearchItemsFallback(t *testing.T) {
 	payload := map[string]any{
 		"data": map[string]any{

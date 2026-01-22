@@ -22,6 +22,18 @@ func extractSearchItems(payload map[string]any, kind string) ([]Item, int) {
 }
 
 func extractItemFromPayload(payload map[string]any, kind string) (Item, bool) {
+	if kind == "track" {
+		if m, ok := getMap(payload, "data", "trackUnion"); ok {
+			if item, ok := extractItem(m, kind); ok {
+				return item, true
+			}
+		}
+		if m, ok := getMap(payload, "data", "track"); ok {
+			if item, ok := extractItem(m, kind); ok {
+				return item, true
+			}
+		}
+	}
 	items := collectItemsByKind(payload, kind)
 	if len(items) == 0 {
 		return Item{}, false
@@ -98,6 +110,11 @@ func extractItem(value any, kind string) (Item, bool) {
 	m, ok := value.(map[string]any)
 	if !ok {
 		return Item{}, false
+	}
+	if kind == "track" {
+		if inner, ok := m["track"].(map[string]any); ok {
+			m = inner
+		}
 	}
 	uri := getString(m, "uri")
 	if uri == "" && kind != "" {
