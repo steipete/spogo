@@ -209,9 +209,19 @@ func (c *Context) SetSpotify(client spotify.API) {
 }
 
 func (c *Context) cookieSource() (cookies.Source, error) {
+	// Use explicit cookie path from config if set
 	if c.Profile.CookiePath != "" {
 		return cookies.FileSource{Path: c.Profile.CookiePath}, nil
 	}
+	// Check if cookies exist at the default path (supports headless servers
+	// where cookies were copied manually without running auth import)
+	defaultPath := c.ResolveCookiePath()
+	if defaultPath != "" {
+		if _, err := os.Stat(defaultPath); err == nil {
+			return cookies.FileSource{Path: defaultPath}, nil
+		}
+	}
+	// Fall back to reading from browser
 	browser := c.Profile.Browser
 	if strings.TrimSpace(browser) == "" {
 		browser = "chrome"
