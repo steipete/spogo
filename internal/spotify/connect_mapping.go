@@ -100,6 +100,15 @@ func extractItem(value any, kind string) (Item, bool) {
 		return Item{}, false
 	}
 	uri := getString(m, "uri")
+	if uri == "" {
+		uri = getString(m, "entity_uri")
+	}
+	if uri == "" {
+		uri = getString(m, "track_uri")
+	}
+	if uri == "" {
+		uri = getString(m, "item_uri")
+	}
 	if uri == "" && kind != "" {
 		if id := getString(m, "id"); id != "" {
 			uri = "spotify:" + kind + ":" + id
@@ -119,6 +128,15 @@ func extractItem(value any, kind string) (Item, bool) {
 	name := getString(m, "name")
 	if name == "" {
 		name = getString(m, "title")
+	}
+	if name == "" {
+		// Common connect-state metadata shape: {"metadata":{"title":"..."}}.
+		if meta, ok := m["metadata"].(map[string]any); ok {
+			name = getString(meta, "title")
+			if name == "" {
+				name = getString(meta, "name")
+			}
+		}
 	}
 	if name == "" {
 		name = findFirstName(m)
@@ -231,6 +249,21 @@ func extractArtistNames(value any) []string {
 			if name := getString(m, "artistName"); name != "" {
 				artists = append(artists, name)
 			}
+			// Common connect-state metadata maps.
+			if name := getString(m, "artist_name"); name != "" {
+				artists = append(artists, name)
+			}
+			if name := getString(m, "album_artist_name"); name != "" {
+				artists = append(artists, name)
+			}
+			if meta, ok := m["metadata"].(map[string]any); ok {
+				if name := getString(meta, "artist_name"); name != "" {
+					artists = append(artists, name)
+				}
+				if name := getString(meta, "album_artist_name"); name != "" {
+					artists = append(artists, name)
+				}
+			}
 		}
 	}
 	return dedupeStrings(artists)
@@ -242,6 +275,11 @@ func extractAlbumName(value any) string {
 		if album != "" {
 			return
 		}
+		// Common connect-state metadata maps.
+		if name := getString(m, "album_title"); name != "" {
+			album = name
+			return
+		}
 		if inner, ok := m["album"].(map[string]any); ok {
 			if name := getString(inner, "name"); name != "" {
 				album = name
@@ -249,6 +287,11 @@ func extractAlbumName(value any) string {
 		}
 		if inner, ok := m["albumOfTrack"].(map[string]any); ok {
 			if name := getString(inner, "name"); name != "" {
+				album = name
+			}
+		}
+		if meta, ok := m["metadata"].(map[string]any); ok {
+			if name := getString(meta, "album_title"); name != "" {
 				album = name
 			}
 		}
