@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Connect: hydrate `status` item and device metadata via Web API best-effort (helps devices/sessions that return sparse connect-state payloads).
+- Connect: bound hydration calls with short timeouts to keep `status --json` responsive under automation.
+- Devices: add `device show` and `device clear`, add `device set --save`, and improve device selector matching (exact/partial name or id).
+
 ## 0.2.0 - 2026-01-07
 
 - Add `applescript` engine for direct Spotify.app control on macOS (thanks @adam91holt)

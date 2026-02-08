@@ -84,7 +84,7 @@ Commands:
 - `queue add|show`
 - `library tracks|albums|artists|playlists`
 - `playlist create|add|remove|tracks`
-- `device list|set`
+- `device list|set|show|clear`
 
 Full spec: `docs/spec.md`.
 
@@ -106,6 +106,7 @@ Defaults: Chrome + Default profile. Cookies are stored under your config directo
 
 - `connect` uses Spotify's internal connect-state endpoints for playback control.
 - Search/info prefer the internal GraphQL API and fall back to web search if hashes can’t be resolved.
+- `status` does best-effort metadata hydration via Web API (track/device names) with short timeouts to avoid hangs.
 
 ## Web engine notes
 

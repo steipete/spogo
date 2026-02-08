@@ -105,7 +105,9 @@ spogo [global flags] <command> [args]
 ### devices
 
 - `spogo device list`
-- `spogo device set <name|id>`
+- `spogo device set <name|id> [--save]`
+- `spogo device show`
+- `spogo device clear`
 
 ## Output contract
 
@@ -117,7 +119,7 @@ spogo [global flags] <command> [args]
 ## Engines
 
 - `auto`: connect first; fall back to web for unsupported features or rate limits.
-- `connect`: internal connect-state endpoints for playback; GraphQL for search/info.
+- `connect`: internal connect-state endpoints for playback; GraphQL for search/info; `status` may hydrate missing track/device metadata via Web API best-effort.
 - `web`: Web API endpoints; search/info/playback auto-fallback to connect when rate limited.
 
 ## Exit codes

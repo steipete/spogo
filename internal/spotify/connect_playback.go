@@ -28,7 +28,107 @@ func (c *ConnectClient) playback(ctx context.Context) (PlaybackStatus, error) {
 	if err != nil {
 		return PlaybackStatus{}, err
 	}
-	return mapPlaybackStatus(state), nil
+	status := mapPlaybackStatus(state)
+
+	// Connect-state payloads sometimes omit item/device metadata (common for some sessions/devices).
+	// Hydrate missing fields best-effort via Web API playback and/or track info calls.
+	var web *Client
+	if w, werr := c.webClient(); werr == nil {
+		web = w
+	}
+	// Use separate short timeouts for hydration calls so one slow endpoint doesn't starve the others.
+	// These values are intentionally conservative to keep `status --json` snappy under automation.
+	const (
+		webPlaybackTimeout = 900 * time.Millisecond
+		webDevicesTimeout  = 900 * time.Millisecond
+		trackInfoTimeout   = 1500 * time.Millisecond
+	)
+
+	var webDevices []Device
+	webDevicesLoaded := false
+	loadWebDevices := func() []Device {
+		if webDevicesLoaded || web == nil {
+			return webDevices
+		}
+		webDevicesLoaded = true
+		wctx, cancel := hydrationContext(ctx, webDevicesTimeout)
+		defer cancel()
+		if devs, derr := web.Devices(wctx); derr == nil {
+			webDevices = devs
+		}
+		return webDevices
+	}
+
+	if web != nil && ((status.Item != nil && status.Item.Name == "") || status.Device.Name == "" || status.Device.ID == "") {
+		wctx, cancel := hydrationContext(ctx, webPlaybackTimeout)
+		defer cancel()
+		if webStatus, perr := web.Playback(wctx); perr == nil {
+			if (status.Device.Name == "" || status.Device.ID == "") && (webStatus.Device.Name != "" || webStatus.Device.ID != "") {
+				// Prefer Web API device object if it has any useful metadata.
+				if status.Device.ID == "" {
+					status.Device.ID = webStatus.Device.ID
+				}
+				if status.Device.Name == "" {
+					status.Device.Name = webStatus.Device.Name
+				}
+				if status.Device.Type == "" {
+					status.Device.Type = webStatus.Device.Type
+				}
+				if status.Device.Volume == 0 {
+					status.Device.Volume = webStatus.Device.Volume
+				}
+				if !status.Device.Restricted {
+					status.Device.Restricted = webStatus.Device.Restricted
+				}
+				if !status.Device.Active {
+					status.Device.Active = webStatus.Device.Active
+				}
+			}
+			if status.Item != nil && status.Item.Name == "" && webStatus.Item != nil && webStatus.Item.Name != "" {
+				mergeItem(status.Item, webStatus.Item)
+			}
+		}
+	}
+
+	// If we have an id but no name, try to map it via /me/player/devices.
+	if status.Device.Name == "" && status.Device.ID != "" && web != nil {
+		for _, d := range loadWebDevices() {
+			if strings.EqualFold(d.ID, status.Device.ID) && strings.TrimSpace(d.Name) != "" {
+				status.Device = d
+				status.Device.Active = true
+				break
+			}
+		}
+	}
+
+	// Last resort: if connect-state gave us no device info at all, and Web API has exactly one active device,
+	// assume it's the current playback device.
+	if status.Device.ID == "" && status.Device.Name == "" && web != nil {
+		if d, ok := pickPreferredDevice(loadWebDevices()); ok {
+			status.Device = d
+			status.Device.Active = true
+		}
+	}
+
+	// Track hydration: prefer the fast Web API GetTrack call (avoids GraphQL hash resolution on cold start).
+	if status.Item != nil && status.Item.Name == "" && status.Item.ID != "" && (status.Item.Type == "track" || status.Item.Type == "" || strings.HasPrefix(status.Item.URI, "spotify:track:")) {
+		if web != nil {
+			wctx, cancel := hydrationContext(ctx, trackInfoTimeout)
+			defer cancel()
+			if item, ierr := web.GetTrack(wctx, status.Item.ID); ierr == nil && item.Name != "" {
+				mergeItem(status.Item, &item)
+			}
+		}
+		// If still missing, fall back to the connect GraphQL path (may already be warmed/cached).
+		if status.Item.Name == "" {
+			wctx, cancel := hydrationContext(ctx, trackInfoTimeout)
+			defer cancel()
+			if item, ierr := c.trackInfo(wctx, status.Item.ID); ierr == nil && item.Name != "" {
+				mergeItem(status.Item, &item)
+			}
+		}
+	}
+	return status, nil
 }
 
 func (c *ConnectClient) devices(ctx context.Context) ([]Device, error) {
@@ -36,7 +136,26 @@ func (c *ConnectClient) devices(ctx context.Context) ([]Device, error) {
 	if err != nil {
 		return nil, err
 	}
-	return mapDevices(state), nil
+	devices := mapDevices(state)
+	needsHydration := len(devices) == 0
+	if !needsHydration {
+		allBlank := true
+		for _, d := range devices {
+			if strings.TrimSpace(d.Name) != "" {
+				allBlank = false
+				break
+			}
+		}
+		needsHydration = allBlank
+	}
+	if needsHydration {
+		if web, werr := c.webClient(); werr == nil {
+			if webDevices, derr := web.Devices(ctx); derr == nil && len(webDevices) > 0 {
+				return webDevices, nil
+			}
+		}
+	}
+	return devices, nil
 }
 
 func (c *ConnectClient) transfer(ctx context.Context, deviceID string) error {
@@ -64,6 +183,10 @@ func (c *ConnectClient) play(ctx context.Context, uri string) error {
 	if err != nil {
 		return err
 	}
+	state, err = c.ensureTargetDevice(ctx, state)
+	if err != nil {
+		return err
+	}
 	if uri == "" {
 		return c.sendPlayerCommand(ctx, state, "resume", nil)
 	}
@@ -88,11 +211,19 @@ func (c *ConnectClient) pause(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	state, err = c.ensureTargetDevice(ctx, state)
+	if err != nil {
+		return err
+	}
 	return c.sendPlayerCommand(ctx, state, "pause", nil)
 }
 
 func (c *ConnectClient) next(ctx context.Context) error {
 	state, err := c.connectState(ctx)
+	if err != nil {
+		return err
+	}
+	state, err = c.ensureTargetDevice(ctx, state)
 	if err != nil {
 		return err
 	}
@@ -104,6 +235,10 @@ func (c *ConnectClient) previous(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	state, err = c.ensureTargetDevice(ctx, state)
+	if err != nil {
+		return err
+	}
 	return c.sendPlayerCommand(ctx, state, "skip_prev", nil)
 }
 
@@ -112,6 +247,10 @@ func (c *ConnectClient) seek(ctx context.Context, positionMS int) error {
 		positionMS = 0
 	}
 	state, err := c.connectState(ctx)
+	if err != nil {
+		return err
+	}
+	state, err = c.ensureTargetDevice(ctx, state)
 	if err != nil {
 		return err
 	}
@@ -138,6 +277,10 @@ func (c *ConnectClient) volume(ctx context.Context, volume int) error {
 	if err != nil {
 		return err
 	}
+	state, err = c.ensureTargetDevice(ctx, state)
+	if err != nil {
+		return err
+	}
 	fromID := state.originDeviceID
 	if fromID == "" {
 		fromID = state.activeDeviceID
@@ -156,6 +299,10 @@ func (c *ConnectClient) shuffle(ctx context.Context, enabled bool) error {
 	if err != nil {
 		return err
 	}
+	state, err = c.ensureTargetDevice(ctx, state)
+	if err != nil {
+		return err
+	}
 	payload := map[string]any{
 		"command": map[string]any{
 			"endpoint": "set_shuffling_context",
@@ -170,6 +317,10 @@ func (c *ConnectClient) shuffle(ctx context.Context, enabled bool) error {
 
 func (c *ConnectClient) repeat(ctx context.Context, mode string) error {
 	state, err := c.connectState(ctx)
+	if err != nil {
+		return err
+	}
+	state, err = c.ensureTargetDevice(ctx, state)
 	if err != nil {
 		return err
 	}
@@ -201,6 +352,10 @@ func (c *ConnectClient) queueAdd(ctx context.Context, uri string) error {
 	if err != nil {
 		return err
 	}
+	state, err = c.ensureTargetDevice(ctx, state)
+	if err != nil {
+		return err
+	}
 	payload := map[string]any{
 		"command": map[string]any{
 			"endpoint": "add_to_queue",
@@ -229,6 +384,120 @@ type connectState struct {
 	devices        map[string]any
 	activeDeviceID string
 	originDeviceID string
+}
+
+func (c *ConnectClient) ensureTargetDevice(ctx context.Context, state connectState) (connectState, error) {
+	selector := strings.TrimSpace(c.device)
+	if selector == "" {
+		return state, nil
+	}
+	devices := mapDevices(state)
+	targetID, err := ResolveDeviceID(devices, selector)
+	if err != nil {
+		// If connect-state device metadata is incomplete, fall back to Web API device list.
+		if web, werr := c.webClient(); werr == nil {
+			if webDevices, derr := web.Devices(ctx); derr == nil && len(webDevices) > 0 {
+				targetID, err = ResolveDeviceID(webDevices, selector)
+			}
+		}
+	}
+	if err != nil {
+		return state, err
+	}
+	if targetID == "" || targetID == state.activeDeviceID {
+		return state, nil
+	}
+	fromID := state.originDeviceID
+	if fromID == "" {
+		fromID = state.activeDeviceID
+	}
+	if fromID == "" {
+		return state, errors.New("missing origin device id")
+	}
+	if err := c.sendConnectCommand(ctx, fmt.Sprintf("%s/connect/transfer/from/%s/to/%s", connectStateBase, fromID, targetID), map[string]any{
+		"transfer_options": map[string]any{
+			"restore_paused": "resume",
+		},
+		"command_id": randomHex(32),
+	}); err != nil {
+		return state, err
+	}
+	state.activeDeviceID = targetID
+	return state, nil
+}
+
+func mergeItem(dst *Item, src *Item) {
+	if dst == nil || src == nil {
+		return
+	}
+	if dst.ID == "" {
+		dst.ID = src.ID
+	}
+	if dst.URI == "" {
+		dst.URI = src.URI
+	}
+	if dst.Type == "" {
+		dst.Type = src.Type
+	}
+	if dst.URL == "" {
+		dst.URL = src.URL
+	}
+	if dst.Name == "" {
+		dst.Name = src.Name
+	}
+	if len(dst.Artists) == 0 && len(src.Artists) > 0 {
+		dst.Artists = src.Artists
+	}
+	if dst.Album == "" {
+		dst.Album = src.Album
+	}
+	if dst.DurationMS == 0 {
+		dst.DurationMS = src.DurationMS
+	}
+	if !dst.Explicit {
+		dst.Explicit = src.Explicit
+	}
+	if !dst.IsPlayable {
+		dst.IsPlayable = src.IsPlayable
+	}
+}
+
+func pickPreferredDevice(devices []Device) (Device, bool) {
+	if len(devices) == 0 {
+		return Device{}, false
+	}
+	active := make([]Device, 0, 2)
+	for _, d := range devices {
+		if d.Active {
+			active = append(active, d)
+		}
+	}
+	if len(active) == 1 {
+		return active[0], true
+	}
+	// If multiple devices are marked active, prefer the first one with a name.
+	for _, d := range active {
+		if strings.TrimSpace(d.Name) != "" {
+			return d, true
+		}
+	}
+	if len(active) > 0 {
+		return active[0], true
+	}
+	if len(devices) == 1 {
+		return devices[0], true
+	}
+	return Device{}, false
+}
+
+func hydrationContext(ctx context.Context, fallback time.Duration) (context.Context, context.CancelFunc) {
+	if ctx == nil {
+		return context.WithTimeout(context.Background(), fallback)
+	}
+	if _, ok := ctx.Deadline(); ok {
+		return ctx, func() {}
+	}
+	return context.WithTimeout(ctx, fallback)
 }
 
 func (c *ConnectClient) connectState(ctx context.Context) (connectState, error) {
