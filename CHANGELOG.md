@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fix headless cookie detection by checking the default cookie path without explicit config (`#9`, thanks @RonanCodes)
+
 ## 0.3.0 - 2026-03-08
 
 - Release prep: bump CLI/spec version to `0.3.0`
