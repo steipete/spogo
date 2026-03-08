@@ -1,0 +1,152 @@
+package spotify
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/coder/websocket"
+)
+
+func TestGetConnectionID(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
+		if err != nil {
+			t.Fatalf("accept: %v", err)
+		}
+		defer func() { _ = conn.Close(websocket.StatusNormalClosure, "") }()
+		data, _ := json.Marshal(map[string]any{"headers": map[string]any{"Spotify-Connection-Id": "conn-id"}})
+		if err := conn.Write(r.Context(), websocket.MessageText, data); err != nil {
+			t.Fatalf("write: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	prev := dealerURL
+	dealerURL = "ws" + strings.TrimPrefix(srv.URL, "http")
+	t.Cleanup(func() { dealerURL = prev })
+
+	id, err := getConnectionID(context.Background(), "token")
+	if err != nil {
+		t.Fatalf("getConnectionID: %v", err)
+	}
+	if id != "conn-id" {
+		t.Fatalf("unexpected id: %s", id)
+	}
+}
+
+func TestEnsureConnectDeviceRegisters(t *testing.T) {
+	wsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
+		if err != nil {
+			t.Fatalf("accept: %v", err)
+		}
+		defer func() { _ = conn.Close(websocket.StatusNormalClosure, "") }()
+		data, _ := json.Marshal(map[string]any{"headers": map[string]any{"Spotify-Connection-Id": "conn-xyz"}})
+		if err := conn.Write(r.Context(), websocket.MessageText, data); err != nil {
+			t.Fatalf("write: %v", err)
+		}
+	}))
+	defer wsServer.Close()
+
+	prev := dealerURL
+	dealerURL = "ws" + strings.TrimPrefix(wsServer.URL, "http")
+	t.Cleanup(func() { dealerURL = prev })
+
+	client := newConnectClientForTests(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		return textResponse(http.StatusOK, "ok"), nil
+	}))
+	client.session.connectDeviceID = "device"
+	client.session.connectionID = ""
+	client.session.registeredAt = time.Time{}
+
+	auth := connectAuth{AccessToken: "access", ClientToken: "client-token", ClientVersion: "1.0.0"}
+	if err := client.ensureConnectDevice(context.Background(), auth); err != nil {
+		t.Fatalf("ensure: %v", err)
+	}
+	if client.session.connectionID == "" {
+		t.Fatalf("expected connection id")
+	}
+}
+
+func TestGetConnectionIDMissingHeader(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
+		if err != nil {
+			t.Fatalf("accept: %v", err)
+		}
+		defer func() { _ = conn.Close(websocket.StatusNormalClosure, "") }()
+		data, _ := json.Marshal(map[string]any{"headers": map[string]any{"Other": "nope"}})
+		if err := conn.Write(r.Context(), websocket.MessageText, data); err != nil {
+			t.Fatalf("write: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	prev := dealerURL
+	dealerURL = "ws" + strings.TrimPrefix(srv.URL, "http")
+	t.Cleanup(func() { dealerURL = prev })
+
+	if _, err := getConnectionID(context.Background(), "token"); err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestGetConnectionIDBadHeadersType(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
+		if err != nil {
+			t.Fatalf("accept: %v", err)
+		}
+		defer func() { _ = conn.Close(websocket.StatusNormalClosure, "") }()
+		data, _ := json.Marshal(map[string]any{"headers": "bad"})
+		if err := conn.Write(r.Context(), websocket.MessageText, data); err != nil {
+			t.Fatalf("write: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	prev := dealerURL
+	dealerURL = "ws" + strings.TrimPrefix(srv.URL, "http")
+	t.Cleanup(func() { dealerURL = prev })
+
+	if _, err := getConnectionID(context.Background(), "token"); err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestGetConnectionIDDialError(t *testing.T) {
+	prev := dealerURL
+	dealerURL = "ws://127.0.0.1:1"
+	t.Cleanup(func() { dealerURL = prev })
+
+	if _, err := getConnectionID(context.Background(), "token"); err == nil {
+		t.Fatalf("expected error")
+	}
+}
+
+func TestGetConnectionIDBadJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
+		if err != nil {
+			t.Fatalf("accept: %v", err)
+		}
+		defer func() { _ = conn.Close(websocket.StatusNormalClosure, "") }()
+		if err := conn.Write(r.Context(), websocket.MessageText, []byte("nope")); err != nil {
+			t.Fatalf("write: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	prev := dealerURL
+	dealerURL = "ws" + strings.TrimPrefix(srv.URL, "http")
+	t.Cleanup(func() { dealerURL = prev })
+
+	if _, err := getConnectionID(context.Background(), "token"); err == nil {
+		t.Fatalf("expected error")
+	}
+}

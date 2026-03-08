@@ -15,4 +15,3 @@ func TestNewAppleScriptClient_NonDarwin(t *testing.T) {
 		t.Fatal("expected nil client")
 	}
 }
-
