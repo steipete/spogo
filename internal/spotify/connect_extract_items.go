@@ -47,6 +47,44 @@ func extractLibraryV3Items(payload map[string]any, kind string) ([]Item, int) {
 	return items, total
 }
 
+func extractPlaylistContentItems(payload map[string]any, kind string) ([]Item, int) {
+	content, ok := getMap(payload, "data", "playlistV2", "content")
+	if !ok {
+		return nil, 0
+	}
+	total := getInt(content, "totalCount")
+	rawItems, _ := content["items"].([]any)
+	items := make([]Item, 0, len(rawItems))
+	seen := map[string]struct{}{}
+	for _, raw := range rawItems {
+		m, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		itemV2, ok := m["itemV2"].(map[string]any)
+		if !ok {
+			continue
+		}
+		dataM, ok := itemV2["data"].(map[string]any)
+		if !ok {
+			continue
+		}
+		item, ok := extractItem(dataM, kind)
+		if !ok {
+			continue
+		}
+		if _, dup := seen[item.URI]; dup {
+			continue
+		}
+		seen[item.URI] = struct{}{}
+		items = append(items, item)
+	}
+	if total == 0 {
+		total = len(items)
+	}
+	return items, total
+}
+
 func extractSearchItems(payload map[string]any, kind string) ([]Item, int) {
 	paths := searchPaths(kind)
 	for _, path := range paths {

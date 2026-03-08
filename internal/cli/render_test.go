@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/steipete/spogo/internal/output"
@@ -29,5 +30,13 @@ func TestPlaybackFormatting(t *testing.T) {
 	}
 	if playbackHuman(ctx.Output, status) == "" {
 		t.Fatalf("expected human")
+	}
+}
+
+func TestPlaylistRenderOmitsZeroTracks(t *testing.T) {
+	ctx, _, _ := testutil.NewTestContext(t, output.FormatHuman)
+	line := itemHuman(ctx.Output, spotify.Item{Type: "playlist", Name: "List", Owner: "Peter"})
+	if strings.Contains(line, "0 tracks") {
+		t.Fatalf("unexpected track count: %s", line)
 	}
 }

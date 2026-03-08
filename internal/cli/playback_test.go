@@ -44,6 +44,35 @@ func TestPlayCmdWithType(t *testing.T) {
 	}
 }
 
+func TestPlayCmdShuffle(t *testing.T) {
+	ctx, _, _ := testutil.NewTestContext(t, output.FormatPlain)
+	calls := []string{}
+	mock := &testutil.SpotifyMock{
+		ShuffleFn: func(ctx context.Context, enabled bool) error {
+			if !enabled {
+				t.Fatalf("expected shuffle enabled")
+			}
+			calls = append(calls, "shuffle")
+			return nil
+		},
+		PlayFn: func(ctx context.Context, uri string) error {
+			if uri != "spotify:track:abc" {
+				t.Fatalf("uri %s", uri)
+			}
+			calls = append(calls, "play")
+			return nil
+		},
+	}
+	ctx.SetSpotify(mock)
+	cmd := PlayCmd{Item: "abc", Type: "track", Shuffle: true}
+	if err := cmd.Run(ctx); err != nil {
+		t.Fatalf("run: %v", err)
+	}
+	if len(calls) != 2 || calls[0] != "shuffle" || calls[1] != "play" {
+		t.Fatalf("unexpected call order: %#v", calls)
+	}
+}
+
 func TestPlayCmdArtistTopTrack(t *testing.T) {
 	ctx, _, _ := testutil.NewTestContext(t, output.FormatPlain)
 	mock := &testutil.SpotifyMock{

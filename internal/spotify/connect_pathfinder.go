@@ -269,13 +269,7 @@ func (c *ConnectClient) playlistTracks(ctx context.Context, id string, limit, of
 	if err != nil {
 		return nil, 0, err
 	}
-	items := collectItemsByKind(payload, "track")
-	total := len(items)
-	if content, ok := getMap(payload, "data", "playlistV2", "content"); ok {
-		if t := getInt(content, "totalCount"); t > 0 {
-			total = t
-		}
-	}
+	items, total := extractPlaylistContentItems(payload, "track")
 	return items, total, nil
 }
 

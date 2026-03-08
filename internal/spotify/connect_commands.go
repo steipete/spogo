@@ -51,18 +51,38 @@ func (c *ConnectClient) play(ctx context.Context, uri string) error {
 	if uri == "" {
 		return c.sendPlayerCommand(ctx, state, "resume", nil)
 	}
-	payload := map[string]any{
-		"command": map[string]any{
-			"endpoint": "play",
-			"logging_params": map[string]any{
-				"command_id": randomHex(32),
-			},
-			"options": map[string]any{
-				"skip_to": map[string]any{
-					"track_uri": uri,
+	var payload map[string]any
+	if isContextURI(uri) {
+		payload = map[string]any{
+			"command": map[string]any{
+				"endpoint": "play",
+				"logging_params": map[string]any{
+					"command_id": randomHex(32),
+				},
+				"context": map[string]any{
+					"uri": uri,
+					"url": "context://" + uri,
 				},
 			},
-		},
+		}
+	} else {
+		payload = map[string]any{
+			"command": map[string]any{
+				"endpoint": "play",
+				"logging_params": map[string]any{
+					"command_id": randomHex(32),
+				},
+				"context": map[string]any{
+					"uri": uri,
+					"url": "context://" + uri,
+				},
+				"options": map[string]any{
+					"skip_to": map[string]any{
+						"track_uri": uri,
+					},
+				},
+			},
+		}
 	}
 	return c.sendPlayerCommand(ctx, state, "play", payload)
 }

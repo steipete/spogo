@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add `play --shuffle`, Connect library/playlist support, and context-aware Connect play payloads (`#15`, thanks @StandardGage)
 - Fix Connect track artist extraction for nested artist containers and minimal artist fragments (`#7`, thanks @joelbdavies)
 
 ## 0.3.0 - 2026-03-08

@@ -100,23 +100,12 @@ func (cmd *PlayCmd) Run(ctx *app.Context) error {
 			uri = res.URI
 		}
 	}
-<<<<<<< HEAD
 	if cmd.Shuffle {
 		if err := client.Shuffle(cmdCtx, true); err != nil {
 			return err
 		}
 	}
 	if err := client.Play(cmdCtx, uri); err != nil {
-||||||| parent of 30d88df (feat: add shuffle option to play command and enhance playback functionality)
-	if err := client.Play(context.Background(), uri); err != nil {
-=======
-	if cmd.Shuffle {
-		if err := client.Shuffle(context.Background(), true); err != nil {
-			return err
-		}
-	}
-	if err := client.Play(context.Background(), uri); err != nil {
->>>>>>> 30d88df (feat: add shuffle option to play command and enhance playback functionality)
 		return err
 	}
 	return emitOK(ctx, nil, "Playback started")

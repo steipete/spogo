@@ -145,3 +145,15 @@ func TestParseToggleOff(t *testing.T) {
 		t.Fatalf("expected false")
 	}
 }
+
+func TestPlayCmdShuffleError(t *testing.T) {
+	ctx, _, _ := testutil.NewTestContext(t, output.FormatPlain)
+	ctx.SetSpotify(&testutil.SpotifyMock{
+		ShuffleFn: func(ctx context.Context, enabled bool) error { return errors.New("boom") },
+		PlayFn:    func(ctx context.Context, uri string) error { t.Fatalf("play should not run"); return nil },
+	})
+	cmd := PlayCmd{Item: "spotify:track:t1", Shuffle: true}
+	if err := cmd.Run(ctx); err == nil {
+		t.Fatalf("expected error")
+	}
+}
