@@ -21,11 +21,16 @@ func (c *ConnectClient) playlistTracks(ctx context.Context, id string, limit, of
 }
 
 func (c *ConnectClient) libraryTracks(ctx context.Context, limit, offset int) ([]Item, int, error) {
-	payload, err := c.graphQL(ctx, "libraryV3", libraryV3Variables("Songs", normalizeLibraryLimit(limit), offset))
+	vars := map[string]any{
+		"uri":    "spotify:collection:tracks",
+		"offset": offset,
+		"limit":  normalizeLibraryLimit(limit),
+	}
+	payload, err := c.graphQL(ctx, "fetchLibraryTracks", vars)
 	if err != nil {
 		return nil, 0, err
 	}
-	items, total := extractLibraryV3Items(payload, "track")
+	items, total := extractFetchLibraryTracks(payload)
 	return items, total, nil
 }
 

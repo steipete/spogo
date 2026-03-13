@@ -23,6 +23,84 @@ func TestExtractItem(t *testing.T) {
 	}
 }
 
+func TestExtractFetchLibraryTracks(t *testing.T) {
+	payload := map[string]any{
+		"data": map[string]any{"me": map[string]any{"library": map[string]any{"tracks": map[string]any{
+			"totalCount": 2,
+			"items": []any{
+				map[string]any{"track": map[string]any{
+					"_uri": "spotify:track:t1",
+					"data": map[string]any{"name": "Song One"},
+				}},
+				map[string]any{"track": map[string]any{
+					"_uri": "spotify:track:t2",
+					"data": map[string]any{"name": "Song Two"},
+				}},
+			},
+		}}}},
+	}
+	items, total := extractFetchLibraryTracks(payload)
+	if total != 2 || len(items) != 2 {
+		t.Fatalf("expected 2 items, got %d (total %d)", len(items), total)
+	}
+	if items[0].ID != "t1" || items[0].Name != "Song One" {
+		t.Fatalf("unexpected first item: %#v", items[0])
+	}
+	if items[1].ID != "t2" || items[1].Name != "Song Two" {
+		t.Fatalf("unexpected second item: %#v", items[1])
+	}
+}
+
+func TestExtractFetchLibraryTracksDedupes(t *testing.T) {
+	payload := map[string]any{
+		"data": map[string]any{"me": map[string]any{"library": map[string]any{"tracks": map[string]any{
+			"totalCount": 1,
+			"items": []any{
+				map[string]any{"track": map[string]any{
+					"_uri": "spotify:track:t1",
+					"data": map[string]any{"name": "Song"},
+				}},
+				map[string]any{"track": map[string]any{
+					"_uri": "spotify:track:t1",
+					"data": map[string]any{"name": "Song"},
+				}},
+			},
+		}}}},
+	}
+	items, _ := extractFetchLibraryTracks(payload)
+	if len(items) != 1 {
+		t.Fatalf("expected 1 deduped item, got %d", len(items))
+	}
+}
+
+func TestExtractFetchLibraryTracksMissingPath(t *testing.T) {
+	items, total := extractFetchLibraryTracks(map[string]any{})
+	if len(items) != 0 || total != 0 {
+		t.Fatalf("expected empty result, got %d items (total %d)", len(items), total)
+	}
+}
+
+func TestExtractFetchLibraryTracksSkipsMalformed(t *testing.T) {
+	payload := map[string]any{
+		"data": map[string]any{"me": map[string]any{"library": map[string]any{"tracks": map[string]any{
+			"totalCount": 0,
+			"items": []any{
+				"not a map",
+				map[string]any{"track": "not a map"},
+				map[string]any{"track": map[string]any{"_uri": "spotify:track:t1"}},
+				map[string]any{"track": map[string]any{
+					"_uri": "spotify:track:t2",
+					"data": map[string]any{"name": "Valid"},
+				}},
+			},
+		}}}},
+	}
+	items, _ := extractFetchLibraryTracks(payload)
+	if len(items) != 1 || items[0].ID != "t2" {
+		t.Fatalf("expected 1 valid item, got %#v", items)
+	}
+}
+
 func TestSearchPaths(t *testing.T) {
 	paths := searchPaths("track")
 	if len(paths) == 0 {

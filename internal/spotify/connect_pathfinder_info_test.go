@@ -28,16 +28,6 @@ func TestConnectLibraryV3Helpers(t *testing.T) {
 						}}}},
 					}}},
 				}), nil
-			case strings.Contains(variables, `"Songs"`):
-				return jsonResponse(http.StatusOK, map[string]any{
-					"data": map[string]any{"me": map[string]any{"libraryV3": map[string]any{
-						"totalCount": 1,
-						"items": []any{map[string]any{"item": map[string]any{"data": map[string]any{
-							"uri":  "spotify:track:t1",
-							"name": "Song",
-						}}}},
-					}}},
-				}), nil
 			case strings.Contains(variables, `"Albums"`):
 				return jsonResponse(http.StatusOK, map[string]any{
 					"data": map[string]any{"me": map[string]any{"libraryV3": map[string]any{
@@ -49,6 +39,18 @@ func TestConnectLibraryV3Helpers(t *testing.T) {
 					}}},
 				}), nil
 			}
+		case "fetchLibraryTracks":
+			return jsonResponse(http.StatusOK, map[string]any{
+				"data": map[string]any{"me": map[string]any{"library": map[string]any{"tracks": map[string]any{
+					"totalCount": 1,
+					"items": []any{map[string]any{"track": map[string]any{
+						"_uri": "spotify:track:t1",
+						"data": map[string]any{
+							"name": "Song",
+						},
+					}}},
+				}}}},
+			}), nil
 		case "fetchPlaylist":
 			return jsonResponse(http.StatusOK, map[string]any{
 				"data": map[string]any{"playlistV2": map[string]any{"content": map[string]any{
@@ -62,7 +64,7 @@ func TestConnectLibraryV3Helpers(t *testing.T) {
 		return textResponse(http.StatusNotFound, "missing"), nil
 	})
 	client := newConnectClientForTests(transport)
-	for _, op := range []string{"libraryV3", "fetchPlaylist"} {
+	for _, op := range []string{"libraryV3", "fetchPlaylist", "fetchLibraryTracks"} {
 		client.hashes.hashes[op] = "hash"
 	}
 

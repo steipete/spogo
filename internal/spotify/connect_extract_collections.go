@@ -12,6 +12,52 @@ func extractLibraryV3Items(payload map[string]any, kind string) ([]Item, int) {
 	return extractWrappedCollectionItems(lib, "items", "item", "data", "totalCount", kind)
 }
 
+// extractFetchLibraryTracks navigates the fetchLibraryTracks response path
+// data.me.library.tracks.items[i].track.data to extract track items.
+// The track URI lives at items[i].track._uri (not inside .data), so we
+// inject it into the data map before passing it to extractItem.
+func extractFetchLibraryTracks(payload map[string]any) ([]Item, int) {
+	tracks, ok := getMap(payload, "data", "me", "library", "tracks")
+	if !ok {
+		return nil, 0
+	}
+	rawItems, _ := tracks["items"].([]any)
+	items := make([]Item, 0, len(rawItems))
+	seen := map[string]struct{}{}
+	for _, raw := range rawItems {
+		m, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		wrapper, ok := m["track"].(map[string]any)
+		if !ok {
+			continue
+		}
+		dataM, ok := wrapper["data"].(map[string]any)
+		if !ok {
+			continue
+		}
+		// _uri is on the wrapper, not inside data
+		if uri, ok := wrapper["_uri"].(string); ok && getString(dataM, "uri") == "" {
+			dataM["uri"] = uri
+		}
+		item, ok := extractItem(dataM, "track")
+		if !ok {
+			continue
+		}
+		if _, dup := seen[item.URI]; dup {
+			continue
+		}
+		seen[item.URI] = struct{}{}
+		items = append(items, item)
+	}
+	total := getInt(tracks, "totalCount")
+	if total == 0 {
+		total = len(items)
+	}
+	return items, total
+}
+
 func extractPlaylistContentItems(payload map[string]any, kind string) ([]Item, int) {
 	content, ok := getMap(payload, "data", "playlistV2", "content")
 	if !ok {
