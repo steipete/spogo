@@ -28,16 +28,6 @@ func TestConnectLibraryV3Helpers(t *testing.T) {
 						}}}},
 					}}},
 				}), nil
-			case strings.Contains(variables, `"Songs"`):
-				return jsonResponse(http.StatusOK, map[string]any{
-					"data": map[string]any{"me": map[string]any{"libraryV3": map[string]any{
-						"totalCount": 1,
-						"items": []any{map[string]any{"item": map[string]any{"data": map[string]any{
-							"uri":  "spotify:track:t1",
-							"name": "Song",
-						}}}},
-					}}},
-				}), nil
 			case strings.Contains(variables, `"Albums"`):
 				return jsonResponse(http.StatusOK, map[string]any{
 					"data": map[string]any{"me": map[string]any{"libraryV3": map[string]any{
@@ -49,6 +39,31 @@ func TestConnectLibraryV3Helpers(t *testing.T) {
 					}}},
 				}), nil
 			}
+		case "fetchLibraryTracks":
+			var vars map[string]any
+			if err := json.Unmarshal([]byte(req.URL.Query().Get("variables")), &vars); err != nil {
+				t.Fatalf("unmarshal fetchLibraryTracks variables: %v", err)
+			}
+			if got := getString(vars, "uri"); got != "spotify:collection:tracks" {
+				t.Fatalf("fetchLibraryTracks uri = %q", got)
+			}
+			if got := getInt(vars, "limit"); got != 10 {
+				t.Fatalf("fetchLibraryTracks limit = %d", got)
+			}
+			if got := getInt(vars, "offset"); got != 0 {
+				t.Fatalf("fetchLibraryTracks offset = %d", got)
+			}
+			return jsonResponse(http.StatusOK, map[string]any{
+				"data": map[string]any{"me": map[string]any{"library": map[string]any{"tracks": map[string]any{
+					"totalCount": 1,
+					"items": []any{map[string]any{"track": map[string]any{
+						"_uri": "spotify:track:t1",
+						"data": map[string]any{
+							"name": "Song",
+						},
+					}}},
+				}}}},
+			}), nil
 		case "fetchPlaylist":
 			return jsonResponse(http.StatusOK, map[string]any{
 				"data": map[string]any{"playlistV2": map[string]any{"content": map[string]any{
@@ -62,7 +77,7 @@ func TestConnectLibraryV3Helpers(t *testing.T) {
 		return textResponse(http.StatusNotFound, "missing"), nil
 	})
 	client := newConnectClientForTests(transport)
-	for _, op := range []string{"libraryV3", "fetchPlaylist"} {
+	for _, op := range []string{"libraryV3", "fetchPlaylist", "fetchLibraryTracks"} {
 		client.hashes.hashes[op] = "hash"
 	}
 
@@ -81,6 +96,52 @@ func TestConnectLibraryV3Helpers(t *testing.T) {
 	albums, total, err := client.libraryAlbums(context.Background(), 10, 0)
 	if err != nil || total != 1 || len(albums) != 1 || albums[0].ID != "a1" {
 		t.Fatalf("library albums: items=%#v total=%d err=%v", albums, total, err)
+	}
+}
+
+func TestConnectLibraryTracksFallsBackWhenFetchLibraryTracksPayloadDrifts(t *testing.T) {
+	webServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/me/tracks":
+			_ = json.NewEncoder(w).Encode(libraryResponse{
+				Items: []struct {
+					Track trackItem `json:"track"`
+					Album albumItem `json:"album"`
+				}{
+					{Track: trackItem{ID: "t1", URI: "spotify:track:t1", Name: "Song"}},
+				},
+				Total: 1,
+			})
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	t.Cleanup(webServer.Close)
+
+	webClient, err := NewClient(Options{
+		TokenProvider: staticTokenProvider{},
+		BaseURL:       webServer.URL,
+		HTTPClient:    webServer.Client(),
+	})
+	if err != nil {
+		t.Fatalf("web client: %v", err)
+	}
+
+	transport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		if req.URL.Query().Get("operationName") != "fetchLibraryTracks" {
+			return textResponse(http.StatusNotFound, "missing"), nil
+		}
+		return jsonResponse(http.StatusOK, map[string]any{
+			"data": map[string]any{"me": map[string]any{"library": map[string]any{}}},
+		}), nil
+	})
+	client := newConnectClientForTests(transport)
+	client.web = webClient
+	client.hashes.hashes["fetchLibraryTracks"] = "hash"
+
+	items, total, err := client.LibraryTracks(context.Background(), 10, 0)
+	if err != nil || total != 1 || len(items) != 1 || items[0].ID != "t1" {
+		t.Fatalf("library tracks fallback: items=%#v total=%d err=%v", items, total, err)
 	}
 }
 
