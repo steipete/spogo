@@ -39,7 +39,10 @@ func TestExtractFetchLibraryTracks(t *testing.T) {
 			},
 		}}}},
 	}
-	items, total := extractFetchLibraryTracks(payload)
+	items, total, err := extractFetchLibraryTracks(payload)
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
 	if total != 2 || len(items) != 2 {
 		t.Fatalf("expected 2 items, got %d (total %d)", len(items), total)
 	}
@@ -67,16 +70,19 @@ func TestExtractFetchLibraryTracksDedupes(t *testing.T) {
 			},
 		}}}},
 	}
-	items, _ := extractFetchLibraryTracks(payload)
+	items, _, err := extractFetchLibraryTracks(payload)
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
 	if len(items) != 1 {
 		t.Fatalf("expected 1 deduped item, got %d", len(items))
 	}
 }
 
 func TestExtractFetchLibraryTracksMissingPath(t *testing.T) {
-	items, total := extractFetchLibraryTracks(map[string]any{})
-	if len(items) != 0 || total != 0 {
-		t.Fatalf("expected empty result, got %d items (total %d)", len(items), total)
+	items, total, err := extractFetchLibraryTracks(map[string]any{})
+	if err == nil {
+		t.Fatalf("expected error, got %d items (total %d)", len(items), total)
 	}
 }
 
@@ -95,7 +101,10 @@ func TestExtractFetchLibraryTracksSkipsMalformed(t *testing.T) {
 			},
 		}}}},
 	}
-	items, _ := extractFetchLibraryTracks(payload)
+	items, _, err := extractFetchLibraryTracks(payload)
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
 	if len(items) != 1 || items[0].ID != "t2" {
 		t.Fatalf("expected 1 valid item, got %#v", items)
 	}

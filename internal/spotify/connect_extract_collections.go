@@ -1,5 +1,7 @@
 package spotify
 
+import "fmt"
+
 // extractLibraryV3Items navigates the specific libraryV3 response path
 // data.me.libraryV3.items[i].item.data to extract items of the given kind.
 // Using a targeted path avoids the duplicates and fake sort-category entries
@@ -16,12 +18,19 @@ func extractLibraryV3Items(payload map[string]any, kind string) ([]Item, int) {
 // data.me.library.tracks.items[i].track.data to extract track items.
 // The track URI lives at items[i].track._uri (not inside .data), so we
 // inject it into the data map before passing it to extractItem.
-func extractFetchLibraryTracks(payload map[string]any) ([]Item, int) {
+func extractFetchLibraryTracks(payload map[string]any) ([]Item, int, error) {
 	tracks, ok := getMap(payload, "data", "me", "library", "tracks")
 	if !ok {
-		return nil, 0
+		return nil, 0, fmt.Errorf("fetchLibraryTracks payload missing data.me.library.tracks")
 	}
-	rawItems, _ := tracks["items"].([]any)
+	rawItemsValue, ok := tracks["items"]
+	if !ok {
+		return nil, 0, fmt.Errorf("fetchLibraryTracks payload missing data.me.library.tracks.items")
+	}
+	rawItems, ok := rawItemsValue.([]any)
+	if !ok {
+		return nil, 0, fmt.Errorf("fetchLibraryTracks payload has invalid data.me.library.tracks.items")
+	}
 	items := make([]Item, 0, len(rawItems))
 	seen := map[string]struct{}{}
 	for _, raw := range rawItems {
@@ -55,7 +64,7 @@ func extractFetchLibraryTracks(payload map[string]any) ([]Item, int) {
 	if total == 0 {
 		total = len(items)
 	}
-	return items, total
+	return items, total, nil
 }
 
 func extractPlaylistContentItems(payload map[string]any, kind string) ([]Item, int) {

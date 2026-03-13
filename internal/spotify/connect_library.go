@@ -30,8 +30,7 @@ func (c *ConnectClient) libraryTracks(ctx context.Context, limit, offset int) ([
 	if err != nil {
 		return nil, 0, err
 	}
-	items, total := extractFetchLibraryTracks(payload)
-	return items, total, nil
+	return extractFetchLibraryTracks(payload)
 }
 
 func (c *ConnectClient) libraryAlbums(ctx context.Context, limit, offset int) ([]Item, int, error) {
