@@ -42,10 +42,19 @@ func (c *ConnectClient) transferViaWebAPI(ctx context.Context, deviceID string) 
 
 func (c *ConnectClient) play(ctx context.Context, uri string) error {
 	return withConnectStateErr(ctx, c, func(state connectState) error {
+		if state.activeDeviceID == "" {
+			return c.playViaWebAPI(ctx, uri)
+		}
 		if uri == "" {
 			return c.sendPlayerCommand(ctx, state, "resume", nil)
 		}
 		return c.sendPlayerCommand(ctx, state, "play", playCommandPayload(uri))
+	})
+}
+
+func (c *ConnectClient) playViaWebAPI(ctx context.Context, uri string) error {
+	return withWebFallback(c, func(web *Client) error {
+		return web.Play(ctx, uri)
 	})
 }
 
