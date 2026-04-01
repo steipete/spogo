@@ -187,6 +187,51 @@ func TestConnectTransferFallsBackToWebAPIWithoutOriginDevice(t *testing.T) {
 	}
 }
 
+func TestConnectPlayFallsBackToWebAPIWithoutActiveDevice(t *testing.T) {
+	statePayload := map[string]any{
+		"devices": map[string]any{
+			"device-1": map[string]any{
+				"name":        "Desk",
+				"device_type": "computer",
+			},
+		},
+		"player_state": map[string]any{
+			"is_paused": true,
+		},
+	}
+	var sawWebPlay bool
+	transport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
+			return jsonResponse(http.StatusOK, statePayload), nil
+		case req.Method == http.MethodPut && req.URL.Path == "/v1/me/player/play":
+			sawWebPlay = true
+			return textResponse(http.StatusNoContent, ""), nil
+		case req.Method == http.MethodPost:
+			t.Fatalf("unexpected connect command: %s", req.URL.Path)
+			return nil, nil
+		default:
+			return textResponse(http.StatusNotFound, "missing"), nil
+		}
+	})
+	client := newRegisteredConnectClientForTests(transport)
+	webClient, err := NewClient(Options{
+		TokenProvider: staticTokenProvider{},
+		HTTPClient:    client.client,
+	})
+	if err != nil {
+		t.Fatalf("new web client: %v", err)
+	}
+	client.web = webClient
+
+	if err := client.Play(context.Background(), "spotify:track:abc"); err != nil {
+		t.Fatalf("play: %v", err)
+	}
+	if !sawWebPlay {
+		t.Fatalf("expected web play fallback")
+	}
+}
+
 func TestSendPlayerCommandMissingDevice(t *testing.T) {
 	client := newConnectClientForTests(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
 		return textResponse(http.StatusOK, ""), nil
