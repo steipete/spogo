@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">spogo social card</title>
+  <desc id="desc">spogo: Spotify, but make it terminal. A Go CLI for Spotify search, playback, library, playlists, queue, and devices.</desc>
+  <defs>
+    <radialGradient id="bg" cx="100%" cy="0%" r="120%">
+      <stop offset="0" stop-color="#143a26"/>
+      <stop offset="0.45" stop-color="#0c1816"/>
+      <stop offset="1" stop-color="#06090c"/>
+    </radialGradient>
+    <radialGradient id="bgWarm" cx="0%" cy="100%" r="60%">
+      <stop offset="0" stop-color="#5a2410" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#06090c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#070b15"/>
+    </linearGradient>
+    <linearGradient id="panelBar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b2438"/>
+      <stop offset="1" stop-color="#141c2e"/>
+    </linearGradient>
+    <linearGradient id="brandSweep" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1ed760"/>
+      <stop offset="0.4" stop-color="#ffd95e"/>
+      <stop offset="0.7" stop-color="#ff7a3d"/>
+      <stop offset="1" stop-color="#ff6ea1"/>
+    </linearGradient>
+    <linearGradient id="titleSweep" x1="0" y1="0" x2="1" y2="0.2">
+      <stop offset="0" stop-color="#1ed760"/>
+      <stop offset="0.55" stop-color="#ff7a3d"/>
+      <stop offset="1" stop-color="#ff6ea1"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#bgWarm)"/>
+
+  <!-- Brand mark: equalizer bars in tile -->
+  <g transform="translate(76 76)">
+    <rect x="0" y="0" width="118" height="118" rx="26" fill="#0a0e12" stroke="#1d2a30"/>
+    <rect x="30" y="62" width="14" height="36" rx="3" fill="#0f7c34"/>
+    <rect x="52" y="32" width="14" height="66" rx="3" fill="#1ed760"/>
+    <rect x="74" y="44" width="14" height="54" rx="3" fill="#ff7a3d"/>
+  </g>
+
+  <!-- Title -->
+  <text x="76" y="290" fill="#f5f8f6" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="116" font-weight="800" letter-spacing="-2">spogo</text>
+
+  <!-- Tagline with gradient terminal accent -->
+  <text x="76" y="350" fill="#e8efeb" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="36" font-weight="700" letter-spacing="-0.5">
+    Spotify, but make it <tspan fill="url(#titleSweep)" font-weight="800">terminal</tspan>.
+  </text>
+
+  <!-- Description (two lines) -->
+  <text x="76" y="402" fill="#9aa9a3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="22" font-weight="500">One Go binary. Search, playback, library,</text>
+  <text x="76" y="430" fill="#9aa9a3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="22" font-weight="500">playlists, queue, devices. JSON or plain.</text>
+
+  <!-- Multi-color accent bar -->
+  <rect x="76" y="454" width="280" height="4" rx="2" fill="url(#brandSweep)"/>
+
+  <!-- Bottom row: install pill + URL pill -->
+  <g transform="translate(76 490)">
+    <rect x="0" y="0" width="372" height="52" rx="12" fill="#0a0e12" stroke="#1d2a30"/>
+    <text x="22" y="34" fill="#1ed760" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700">$</text>
+    <text x="44" y="34" fill="#e6f7ec" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="600">brew install steipete/tap/spogo</text>
+
+    <rect x="392" y="0" width="148" height="52" rx="12" fill="#1ed760"/>
+    <text x="466" y="34" fill="#06281a" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="20" font-weight="800" text-anchor="middle">spogo.sh</text>
+  </g>
+
+  <!-- Right-side terminal mockup -->
+  <g transform="translate(672 142)" filter="url(#shadow)">
+    <rect x="0" y="0" width="464" height="346" rx="18" fill="url(#panel)" stroke="#1d2a30"/>
+    <rect x="0" y="0" width="464" height="42" rx="18" fill="url(#panelBar)"/>
+    <rect x="0" y="22" width="464" height="20" fill="url(#panelBar)"/>
+    <circle cx="24" cy="21" r="6" fill="#ff7a3d"/>
+    <circle cx="46" cy="21" r="6" fill="#ffd95e"/>
+    <circle cx="68" cy="21" r="6" fill="#1ed760"/>
+    <text x="232" y="27" fill="#94a3b8" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="13" font-weight="500" text-anchor="middle">spogo — open.spotify.com</text>
+
+    <!-- Terminal content -->
+    <text x="22" y="80" fill="#1ed760" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="600">$ spogo status</text>
+    <text x="22" y="106" fill="#cbd5e1" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="13">▶ Buddy Holly — Weezer</text>
+    <text x="22" y="128" fill="#94a3b8" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="13">  Pinkerton · 1:48 / 2:39</text>
+    <text x="22" y="150" fill="#94a3b8" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="13">  Kitchen · vol 60</text>
+
+    <text x="22" y="186" fill="#1ed760" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="600">$ spogo status --json | jq .item.id</text>
+
+    <rect x="22" y="204" width="420" height="118" rx="10" fill="#06090c" stroke="#1d2a30"/>
+    <text x="38" y="232" fill="#fbbf24" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="13">{</text>
+    <text x="54" y="252" fill="#a5b4fc" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="13">"is_playing": true,</text>
+    <text x="54" y="272" fill="#a5b4fc" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="13">"item": {</text>
+    <text x="74" y="292" fill="#a7f3d0" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="13">"name": "Buddy Holly",</text>
+    <text x="74" y="312" fill="#a7f3d0" font-family="JetBrains Mono, SFMono-Regular, Menlo, monospace" font-size="13">"id":   "0sf12qNH5qcw8qpgymFOqD"</text>
+  </g>
+
+  <!-- Service pills below terminal -->
+  <g transform="translate(672 514)" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" font-weight="600">
+    <g>
+      <rect x="0" y="0" width="86" height="32" rx="16" fill="#0a0e12" stroke="#1d2a30"/>
+      <circle cx="16" cy="16" r="4" fill="#1ed760"/>
+      <text x="52" y="21" fill="#e8efeb" text-anchor="middle">Search</text>
+    </g>
+    <g transform="translate(98 0)">
+      <rect x="0" y="0" width="98" height="32" rx="16" fill="#0a0e12" stroke="#1d2a30"/>
+      <circle cx="16" cy="16" r="4" fill="#ff7a3d"/>
+      <text x="58" y="21" fill="#e8efeb" text-anchor="middle">Playback</text>
+    </g>
+    <g transform="translate(208 0)">
+      <rect x="0" y="0" width="86" height="32" rx="16" fill="#0a0e12" stroke="#1d2a30"/>
+      <circle cx="16" cy="16" r="4" fill="#ff6ea1"/>
+      <text x="52" y="21" fill="#e8efeb" text-anchor="middle">Library</text>
+    </g>
+    <g transform="translate(306 0)">
+      <rect x="0" y="0" width="78" height="32" rx="16" fill="#0a0e12" stroke="#1d2a30"/>
+      <circle cx="16" cy="16" r="4" fill="#8a6dff"/>
+      <text x="48" y="21" fill="#e8efeb" text-anchor="middle">Queue</text>
+    </g>
+    <g transform="translate(396 0)">
+      <rect x="0" y="0" width="68" height="32" rx="16" fill="#0a0e12" stroke="#1d2a30"/>
+      <circle cx="16" cy="16" r="4" fill="#4ea0ff"/>
+      <text x="42" y="21" fill="#e8efeb" text-anchor="middle">JSON</text>
+    </g>
+  </g>
+</svg>
