@@ -189,8 +189,9 @@ func mergeItemMetadata(dst *Item, src Item) {
 	if dst.DurationMS == 0 {
 		dst.DurationMS = src.DurationMS
 	}
-	if !dst.Explicit {
+	if !dst.ExplicitKnown && (src.ExplicitKnown || src.Explicit) {
 		dst.Explicit = src.Explicit
+		dst.ExplicitKnown = src.ExplicitKnown
 	}
 	if !dst.IsPlayable {
 		dst.IsPlayable = src.IsPlayable

@@ -1,6 +1,9 @@
 package spotify
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestExtractItem(t *testing.T) {
 	raw := map[string]any{
@@ -146,6 +149,97 @@ func TestExtractItemFallbacks(t *testing.T) {
 	}
 	if item.Album != "Album" || item.Owner != "Owner" || item.DurationMS != 1200 {
 		t.Fatalf("unexpected fields: %#v", item)
+	}
+}
+
+func TestExtractItemPathfinderTrackMetadata(t *testing.T) {
+	raw := map[string]any{
+		"id":   "t1",
+		"name": "Song",
+		"contentRating": map[string]any{
+			"label": "EXPLICIT",
+		},
+		"duration": map[string]any{
+			"totalMilliseconds": 321613,
+		},
+		"playability": map[string]any{
+			"playable": true,
+		},
+	}
+	item, ok := extractItem(raw, "track")
+	if !ok {
+		t.Fatalf("expected item")
+	}
+	if !item.Explicit || !item.ExplicitKnown {
+		t.Fatalf("expected explicit metadata: %#v", item)
+	}
+	if item.DurationMS != 321613 {
+		t.Fatalf("unexpected duration: %#v", item)
+	}
+	if !item.IsPlayable {
+		t.Fatalf("expected playable metadata: %#v", item)
+	}
+}
+
+func TestExtractItemPathfinderTrackDurationFallback(t *testing.T) {
+	raw := map[string]any{
+		"id": "t1",
+		"trackDuration": map[string]any{
+			"totalMilliseconds": 1200,
+		},
+	}
+	item, ok := extractItem(raw, "track")
+	if !ok {
+		t.Fatalf("expected item")
+	}
+	if item.DurationMS != 1200 {
+		t.Fatalf("unexpected duration: %#v", item)
+	}
+}
+
+func TestItemJSONIncludesKnownExplicitFalse(t *testing.T) {
+	raw := map[string]any{
+		"id": "t1",
+		"contentRating": map[string]any{
+			"label": "NONE",
+		},
+	}
+	item, ok := extractItem(raw, "track")
+	if !ok {
+		t.Fatalf("expected item")
+	}
+	encoded, err := json.Marshal(item)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(encoded, &fields); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	explicit, ok := fields["explicit"]
+	if !ok {
+		t.Fatalf("expected explicit false in JSON: %s", encoded)
+	}
+	var value bool
+	if err := json.Unmarshal(explicit, &value); err != nil {
+		t.Fatalf("unmarshal explicit: %v", err)
+	}
+	if value {
+		t.Fatalf("expected explicit false in JSON: %s", encoded)
+	}
+}
+
+func TestItemJSONOmitsUnknownExplicitFalse(t *testing.T) {
+	encoded, err := json.Marshal(Item{ID: "p1", URI: "spotify:playlist:p1", Type: "playlist"})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(encoded, &fields); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if _, ok := fields["explicit"]; ok {
+		t.Fatalf("unexpected explicit false in JSON: %s", encoded)
 	}
 }
 

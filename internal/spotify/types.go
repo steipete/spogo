@@ -1,5 +1,7 @@
 package spotify
 
+import "encoding/json"
+
 type Item struct {
 	ID            string   `json:"id"`
 	URI           string   `json:"uri"`
@@ -10,7 +12,8 @@ type Item struct {
 	Album         string   `json:"album,omitempty"`
 	Owner         string   `json:"owner,omitempty"`
 	DurationMS    int      `json:"duration_ms,omitempty"`
-	Explicit      bool     `json:"explicit,omitempty"`
+	Explicit      bool     `json:"-"`
+	ExplicitKnown bool     `json:"-"`
 	TotalTracks   int      `json:"total_tracks,omitempty"`
 	ReleaseDate   string   `json:"release_date,omitempty"`
 	Description   string   `json:"description,omitempty"`
@@ -20,6 +23,21 @@ type Item struct {
 	IsPlayable    bool     `json:"is_playable,omitempty"`
 	Publisher     string   `json:"publisher,omitempty"`
 	TotalEpisodes int      `json:"total_episodes,omitempty"`
+}
+
+func (i Item) MarshalJSON() ([]byte, error) {
+	type itemAlias Item
+	var explicit *bool
+	if i.Explicit || i.ExplicitKnown {
+		explicit = &i.Explicit
+	}
+	return json.Marshal(struct {
+		itemAlias
+		Explicit *bool `json:"explicit,omitempty"`
+	}{
+		itemAlias: itemAlias(i),
+		Explicit:  explicit,
+	})
 }
 
 type SearchResult struct {
