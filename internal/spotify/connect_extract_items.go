@@ -77,10 +77,26 @@ func extractItem(value any, kind string) (Item, bool) {
 			item.Album = album
 		}
 	}
-	item.Explicit = getBool(m, "explicit")
+	if _, ok := m["explicit"]; ok {
+		item.Explicit = getBool(m, "explicit")
+		item.ExplicitKnown = true
+	}
+	if rating, ok := m["contentRating"].(map[string]any); ok {
+		label := strings.ToUpper(getString(rating, "label"))
+		if label != "" {
+			item.Explicit = label == "EXPLICIT"
+			item.ExplicitKnown = true
+		}
+	}
 	item.DurationMS = getInt(m, "duration_ms")
 	if item.DurationMS == 0 {
 		item.DurationMS = getInt(m, "durationMs")
+	}
+	if item.DurationMS == 0 {
+		item.DurationMS = getNestedInt(m, "duration", "totalMilliseconds")
+	}
+	if item.DurationMS == 0 {
+		item.DurationMS = getNestedInt(m, "trackDuration", "totalMilliseconds")
 	}
 	item.Owner = extractOwnerName(m)
 	item.TotalTracks = getInt(m, "totalTracks")
@@ -90,6 +106,9 @@ func extractItem(value any, kind string) (Item, bool) {
 	item.ReleaseDate = getString(m, "releaseDate")
 	item.Description = getString(m, "description")
 	item.IsPlayable = getBool(m, "isPlayable")
+	if !item.IsPlayable {
+		item.IsPlayable = getNestedBool(m, "playability", "playable")
+	}
 	item.Publisher = getString(m, "publisher")
 	item.TotalEpisodes = getInt(m, "totalEpisodes")
 	return item, true
