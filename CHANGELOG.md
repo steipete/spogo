@@ -1,8 +1,10 @@
 # Changelog
 
-## 0.4.0 - Unreleased
+## 0.9.0 - 2026-05-10
 
 - Improve Connect playback latency by caching web auth, client tokens, and the active command route between invocations (`#25`, thanks @kk-spartans)
+- Fix warm Connect commands from cached active routes by persisting the registered spogo sender device.
+- Fix Connect device volumes so `device list` and status output report `0-100` percentages instead of Spotify's raw volume scale.
 
 ## 0.3.1 - 2026-05-10
 

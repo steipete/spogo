@@ -10,7 +10,7 @@ import (
 	"github.com/steipete/spogo/internal/output"
 )
 
-const Version = "0.4.0-unreleased"
+const Version = "0.9.0"
 
 func New() *CLI {
 	return &CLI{}
