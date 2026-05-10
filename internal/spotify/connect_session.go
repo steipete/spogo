@@ -103,9 +103,6 @@ func (s *connectSession) loadCacheLocked() {
 	if cached.ClientVersion != "" {
 		s.clientVer = cached.ClientVersion
 	}
-	if cached.ConnectVersion != "" {
-		s.connectVer = cached.ConnectVersion
-	}
 	if cached.DeviceID != "" {
 		s.deviceID = cached.DeviceID
 	}
@@ -123,7 +120,6 @@ func (s *connectSession) saveCacheLocked() {
 	clientToken := s.clientToken
 	clientTokenT := s.clientTokenT
 	clientVer := s.clientVer
-	connectVer := s.connectVer
 	deviceID := s.deviceID
 	_ = s.cache.update(func(cached *connectCache) {
 		cached.AccessToken = token.AccessToken
@@ -133,7 +129,7 @@ func (s *connectSession) saveCacheLocked() {
 		cached.ClientToken = clientToken
 		cached.ClientTokenExpiresUnix = unixOrZero(clientTokenT)
 		cached.ClientVersion = clientVer
-		cached.ConnectVersion = connectVer
+		cached.ConnectVersion = ""
 		cached.DeviceID = deviceID
 	})
 }
@@ -156,6 +152,7 @@ func (s *connectSession) ensureTokenLocked(ctx context.Context) error {
 }
 
 func (s *connectSession) ensureAppConfigLocked(ctx context.Context) error {
+	s.connectVer = connectClientVersion()
 	if s.clientVer != "" && s.deviceID != "" {
 		return nil
 	}
@@ -219,7 +216,6 @@ func (s *connectSession) ensureAppConfigLocked(ctx context.Context) error {
 		clientVer = clientVer[:idx]
 	}
 	s.clientVer = clientVer
-	s.connectVer = connectClientVersion()
 	s.deviceID = deviceID
 	s.saveCacheLocked()
 	return nil
