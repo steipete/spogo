@@ -42,6 +42,27 @@ func TestResolveCookiePath(t *testing.T) {
 	}
 }
 
+func TestClearCache(t *testing.T) {
+	dir := t.TempDir()
+	ctx := &Context{ConfigPath: filepath.Join(dir, "config.toml"), ProfileKey: "default"}
+	path := ctx.ResolveCachePath()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(path, []byte("{}"), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if err := ctx.ClearCache(); err != nil {
+		t.Fatalf("clear cache: %v", err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Fatalf("expected cache removed, err=%v", err)
+	}
+	if err := ctx.ClearCache(); err != nil {
+		t.Fatalf("clear missing cache: %v", err)
+	}
+}
+
 func TestValidateProfile(t *testing.T) {
 	ctx := &Context{Profile: config.Profile{Market: "USA"}}
 	if err := ctx.ValidateProfile(); err == nil {

@@ -26,3 +26,9 @@ func newRegisteredConnectClientForTests(transport http.RoundTripper) *ConnectCli
 	client.session.registeredAt = time.Now()
 	return client
 }
+
+func attachConnectCacheForTests(client *ConnectClient, path string) {
+	cache := newConnectCacheStore(path)
+	client.cache = cache
+	client.session.cache = cache
+}

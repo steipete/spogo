@@ -29,6 +29,9 @@ func (cmd *AuthClearCmd) Run(ctx *app.Context) error {
 	if err := ctx.SaveProfile(profileCfg); err != nil {
 		return err
 	}
+	if err := ctx.ClearCache(); err != nil {
+		return err
+	}
 	return ctx.Output.Emit(map[string]string{"status": "ok"}, []string{"ok"}, []string{fmt.Sprintf("Moved %s to Trash", path)})
 }
 

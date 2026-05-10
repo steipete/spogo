@@ -11,11 +11,12 @@ import (
 )
 
 type ConnectOptions struct {
-	Source   cookies.Source
-	Market   string
-	Language string
-	Device   string
-	Timeout  time.Duration
+	Source    cookies.Source
+	Market    string
+	Language  string
+	Device    string
+	Timeout   time.Duration
+	CachePath string
 }
 
 type ConnectClient struct {
@@ -30,6 +31,13 @@ type ConnectClient struct {
 	web          *Client
 	searchURL    string
 	searchClient *http.Client
+
+	cache *connectCacheStore
+
+	routeMu              sync.RWMutex
+	cachedActiveDeviceID string
+	cachedOriginDeviceID string
+	cachedRouteAt        time.Time
 }
 
 func NewConnectClient(opts ConnectOptions) (*ConnectClient, error) {
@@ -41,9 +49,11 @@ func NewConnectClient(opts ConnectOptions) (*ConnectClient, error) {
 		timeout = 10 * time.Second
 	}
 	httpClient := &http.Client{Timeout: timeout}
+	cache := newConnectCacheStore(opts.CachePath)
 	session := &connectSession{
 		source: opts.Source,
 		client: httpClient,
+		cache:  cache,
 	}
 	return &ConnectClient{
 		source:   opts.Source,
@@ -53,6 +63,7 @@ func NewConnectClient(opts ConnectOptions) (*ConnectClient, error) {
 		client:   httpClient,
 		session:  session,
 		hashes:   newHashResolver(httpClient, session),
+		cache:    cache,
 	}, nil
 }
 

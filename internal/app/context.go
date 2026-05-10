@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/steipete/spogo/internal/config"
@@ -65,6 +66,21 @@ func (c *Context) SaveProfile(profile config.Profile) error {
 
 func (c *Context) ResolveCookiePath() string {
 	return config.CookiePath(c.ConfigPath, c.ProfileKey)
+}
+
+func (c *Context) ResolveCachePath() string {
+	return config.CachePath(c.ConfigPath, c.ProfileKey)
+}
+
+func (c *Context) ClearCache() error {
+	path := c.ResolveCachePath()
+	if path == "" {
+		return nil
+	}
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	return nil
 }
 
 func (c *Context) EnsureTimeout() time.Duration {

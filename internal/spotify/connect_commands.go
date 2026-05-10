@@ -70,22 +70,22 @@ func (c *ConnectClient) playViaWebAPI(ctx context.Context, uri string) error {
 }
 
 func (c *ConnectClient) pause(ctx context.Context) error {
-	return c.sendStateCommand(ctx, "pause", nil)
+	return c.sendDirectCommand(ctx, "pause", nil)
 }
 
 func (c *ConnectClient) next(ctx context.Context) error {
-	return c.sendStateCommand(ctx, "skip_next", nil)
+	return c.sendDirectCommand(ctx, "skip_next", nil)
 }
 
 func (c *ConnectClient) previous(ctx context.Context) error {
-	return c.sendStateCommand(ctx, "skip_prev", nil)
+	return c.sendDirectCommand(ctx, "skip_prev", nil)
 }
 
 func (c *ConnectClient) seek(ctx context.Context, positionMS int) error {
 	if positionMS < 0 {
 		positionMS = 0
 	}
-	return c.sendStateCommand(ctx, "seek_to", map[string]any{
+	return c.sendDirectCommand(ctx, "seek_to", map[string]any{
 		"command": map[string]any{
 			"endpoint": "seek_to",
 			"value":    positionMS,
@@ -111,7 +111,7 @@ func (c *ConnectClient) volume(ctx context.Context, volume int) error {
 }
 
 func (c *ConnectClient) shuffle(ctx context.Context, enabled bool) error {
-	return c.sendStateCommand(ctx, "set_shuffling_context", map[string]any{
+	return c.sendDirectCommand(ctx, "set_shuffling_context", map[string]any{
 		"command": map[string]any{
 			"endpoint": "set_shuffling_context",
 			"value":    enabled,
@@ -132,11 +132,11 @@ func (c *ConnectClient) repeat(ctx context.Context, mode string) error {
 	repeatingTrack, repeatingContext := repeatFlags(mode)
 	command["repeating_track"] = repeatingTrack
 	command["repeating_context"] = repeatingContext
-	return c.sendStateCommand(ctx, "set_options", map[string]any{"command": command})
+	return c.sendDirectCommand(ctx, "set_options", map[string]any{"command": command})
 }
 
 func (c *ConnectClient) queueAdd(ctx context.Context, uri string) error {
-	return c.sendStateCommand(ctx, "add_to_queue", map[string]any{
+	return c.sendDirectCommand(ctx, "add_to_queue", map[string]any{
 		"command": map[string]any{
 			"endpoint": "add_to_queue",
 			"track": map[string]any{
@@ -159,6 +159,47 @@ func (c *ConnectClient) sendStateCommand(ctx context.Context, endpoint string, p
 	return withConnectStateErr(ctx, c, func(state connectState) error {
 		return c.sendPlayerCommand(ctx, state, endpoint, payload)
 	})
+}
+
+func (c *ConnectClient) sendDirectCommand(ctx context.Context, endpoint string, payload map[string]any) error {
+	if payload == nil {
+		payload = map[string]any{
+			"command": map[string]any{
+				"endpoint": endpoint,
+				"logging_params": map[string]any{
+					"command_id": randomHex(32),
+				},
+			},
+		}
+	}
+	fromID, toID, ok := c.commandRoute()
+	if !ok {
+		return c.sendStateCommand(ctx, endpoint, payload)
+	}
+	url := fmt.Sprintf("%s/player/command/from/%s/to/%s", connectStateBase, fromID, toID)
+	if err := c.sendConnectCommand(ctx, url, payload); err != nil {
+		if !isRouteStaleError(err) {
+			return err
+		}
+		return c.sendStateCommand(ctx, endpoint, payload)
+	}
+	return nil
+}
+
+func isRouteStaleError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var apiErr APIError
+	if !errors.As(err, &apiErr) {
+		return false
+	}
+	switch apiErr.Status {
+	case http.StatusBadRequest, http.StatusNotFound, http.StatusConflict, http.StatusGone:
+		return true
+	default:
+		return false
+	}
 }
 
 func withConnectState[T any](ctx context.Context, c *ConnectClient, fn func(connectState) (T, error)) (T, error) {

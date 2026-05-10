@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -65,6 +66,57 @@ func TestConnectSessionAuth(t *testing.T) {
 	}
 	if auth.DeviceID != "device" {
 		t.Fatalf("unexpected device id: %s", auth.DeviceID)
+	}
+}
+
+func TestConnectSessionAuthPersistsCache(t *testing.T) {
+	restore := SetTotpSecretFetcher(func(ctx context.Context) (int, []byte, error) {
+		return 1, []byte{1, 2, 3, 4}, nil
+	})
+	t.Cleanup(restore)
+
+	cache := newConnectCacheStore(filepath.Join(t.TempDir(), "connect.json"))
+	cookies := []*http.Cookie{
+		{Name: "sp_dc", Value: "token", Domain: ".spotify.com"},
+		{Name: "sp_t", Value: "device", Domain: ".spotify.com"},
+	}
+	transport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case req.URL.Host == "open.spotify.com" && req.URL.Path == "/api/token":
+			return jsonResponse(http.StatusOK, tokenResponse{
+				AccessToken: "access",
+				ExpiresIn:   3600,
+				ClientID:    "client",
+			}), nil
+		case req.URL.Host == "open.spotify.com" && req.URL.Path == "/":
+			raw, _ := json.Marshal(map[string]any{"clientVersion": "1.2.3"})
+			return textResponse(http.StatusOK, fmt.Sprintf(`<script id="appServerConfig" type="text/plain">%s</script>`, base64.StdEncoding.EncodeToString(raw))), nil
+		case req.URL.Host == "clienttoken.spotify.com":
+			return jsonResponse(http.StatusOK, map[string]any{
+				"granted_token": map[string]any{"token": "client-token", "expires_in": 600},
+			}), nil
+		default:
+			return textResponse(http.StatusNotFound, "missing"), nil
+		}
+	})
+	first := &connectSession{source: cookieSourceStub{cookies: cookies}, client: &http.Client{Transport: transport}, cache: cache}
+	if _, err := first.auth(context.Background()); err != nil {
+		t.Fatalf("auth: %v", err)
+	}
+
+	second := &connectSession{
+		client: &http.Client{Transport: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			t.Fatalf("unexpected network request: %s", req.URL)
+			return textResponse(http.StatusInternalServerError, "unexpected"), nil
+		})},
+		cache: cache,
+	}
+	auth, err := second.auth(context.Background())
+	if err != nil {
+		t.Fatalf("cached auth: %v", err)
+	}
+	if auth.AccessToken != "access" || auth.ClientToken != "client-token" || auth.ClientVersion != "1.2.3" || auth.DeviceID != "device" {
+		t.Fatalf("unexpected cached auth: %#v", auth)
 	}
 }
 
