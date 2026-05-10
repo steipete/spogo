@@ -26,7 +26,7 @@ A single Go binary for Spotify on the command line. Search the catalog, drive pl
 
 ## Status
 
-Actively developed. The [CHANGELOG](https://github.com/steipete/spogo/blob/main/CHANGELOG.md) tracks every shipping release. Current line is `v0.3.x`.
+Actively developed. The [CHANGELOG](https://github.com/openclaw/spogo/blob/main/CHANGELOG.md) tracks every shipping release. Current line is `v0.3.x`.
 
 ## Out of scope
 
@@ -34,4 +34,4 @@ Actively developed. The [CHANGELOG](https://github.com/steipete/spogo/blob/main/
 - Hosted runtime, web UI, or GUI.
 - A library — spogo is a tool, not a Go SDK; internal packages are not stable.
 
-Released under the [MIT license](https://github.com/steipete/spogo/blob/main/LICENSE). Not affiliated with Spotify. Spotify is a trademark of Spotify AB.
+Released under the [MIT license](https://github.com/openclaw/spogo/blob/main/LICENSE). Not affiliated with Spotify. Spotify is a trademark of Spotify AB.

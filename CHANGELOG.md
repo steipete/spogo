@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.3.1 - 2026-05-10
+
+- Fix Connect Pathfinder track metadata extraction for explicit ratings, nested durations, and playability (`#26`, thanks @theDimZone)
+- Add generated `llms.txt` docs index for agent-friendly documentation discovery
+- Update release automation/docs for the OpenClaw repository move
+
 ## 0.3.0 - 2026-05-05
 
 - Add `auth paste`, wire `--no-input`, and improve cookie diagnostics/cleanup (`#5`, thanks @im-zayan)

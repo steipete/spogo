@@ -148,4 +148,4 @@ spogo --version
 spogo -d <failing command> 2> spogo.log
 ```
 
-Attach `spogo.log` (redact any cookie values it contains) to a [GitHub issue](https://github.com/steipete/spogo/issues).
+Attach `spogo.log` (redact any cookie values it contains) to a [GitHub issue](https://github.com/openclaw/spogo/issues).

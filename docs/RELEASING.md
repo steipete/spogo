@@ -9,7 +9,7 @@ Always do **all** steps below (CI + changelog + tag + GitHub release assets). No
 Shortcut (if you want scripts later): create them to mirror this doc.
 
 Assumptions:
-- Repo: `steipete/spogo`
+- Repo: `openclaw/spogo`
 - Binary: `spogo`
 - GoReleaser config: `.goreleaser.yaml`
 

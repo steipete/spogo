@@ -74,7 +74,7 @@ jobs:
             --ref main \
             -f formula=spogo \
             -f tag="$RELEASE_TAG" \
-            -f repository=steipete/spogo \
+            -f repository=openclaw/spogo \
             -f artifact_template="{formula}_{version}_{target}.tar.gz" \
             -f request_id="$request_id"
 

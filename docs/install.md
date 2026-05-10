@@ -25,10 +25,10 @@ Builds from source against your local Go toolchain. Requires Go 1.22+.
 
 ## Pre-built release binaries
 
-Grab a tarball or zip for your OS/arch from the [releases page](https://github.com/steipete/spogo/releases) and drop the `spogo` binary somewhere on `PATH`:
+Grab a tarball or zip for your OS/arch from the [releases page](https://github.com/openclaw/spogo/releases) and drop the `spogo` binary somewhere on `PATH`:
 
 ```bash
-curl -L https://github.com/steipete/spogo/releases/latest/download/spogo_$(uname -s)_$(uname -m).tar.gz | tar xz
+curl -L https://github.com/openclaw/spogo/releases/latest/download/spogo_$(uname -s)_$(uname -m).tar.gz | tar xz
 sudo mv spogo /usr/local/bin/
 spogo --version
 ```
@@ -36,7 +36,7 @@ spogo --version
 ## Build from source
 
 ```bash
-git clone https://github.com/steipete/spogo.git
+git clone https://github.com/openclaw/spogo.git
 cd spogo
 make spogo
 ./spogo --version
