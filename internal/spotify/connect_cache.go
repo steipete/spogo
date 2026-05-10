@@ -97,13 +97,6 @@ func unixOrZero(t time.Time) int64 {
 	return t.Unix()
 }
 
-func timeFromUnix(unix int64) time.Time {
-	if unix <= 0 {
-		return time.Time{}
-	}
-	return time.Unix(unix, 0)
-}
-
 func (c *ConnectClient) cacheCommandRoute(state connectState) {
 	if c == nil || state.activeDeviceID == "" {
 		return
@@ -114,40 +107,12 @@ func (c *ConnectClient) cacheCommandRoute(state connectState) {
 	c.cachedOriginDeviceID = state.originDeviceID
 	c.cachedRouteAt = now
 	c.routeMu.Unlock()
-	if c.cache != nil {
-		active := state.activeDeviceID
-		origin := state.originDeviceID
-		_ = c.cache.update(func(cache *connectCache) {
-			cache.ActiveDeviceID = active
-			cache.OriginDeviceID = origin
-			cache.RouteUnix = now.Unix()
-		})
-	}
 }
 
 func (c *ConnectClient) commandRoute() (string, string, bool) {
 	if c == nil {
 		return "", "", false
 	}
-	if from, to, ok := c.memoryCommandRoute(); ok {
-		return from, to, true
-	}
-	if c.cache == nil {
-		return "", "", false
-	}
-	cached, err := c.cache.load()
-	if err != nil {
-		return "", "", false
-	}
-	routeAt := timeFromUnix(cached.RouteUnix)
-	if cached.ActiveDeviceID == "" || routeAt.IsZero() || time.Since(routeAt) > commandRouteTTL {
-		return "", "", false
-	}
-	c.routeMu.Lock()
-	c.cachedActiveDeviceID = cached.ActiveDeviceID
-	c.cachedOriginDeviceID = cached.OriginDeviceID
-	c.cachedRouteAt = routeAt
-	c.routeMu.Unlock()
 	return c.memoryCommandRoute()
 }
 

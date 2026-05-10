@@ -144,44 +144,46 @@ func TestConnectPlaybackCachesDirectRoute(t *testing.T) {
 	}
 }
 
-func TestConnectPlaybackPersistsDirectRoute(t *testing.T) {
+func TestConnectPlaybackIgnoresPersistedDirectRoute(t *testing.T) {
 	cachePath := filepath.Join(t.TempDir(), "cache.json")
+	cache := newConnectCacheStore(cachePath)
+	if err := cache.update(func(cached *connectCache) {
+		cached.ActiveDeviceID = "stale-device"
+		cached.OriginDeviceID = "stale-origin"
+		cached.RouteUnix = time.Now().Unix()
+	}); err != nil {
+		t.Fatalf("seed cache: %v", err)
+	}
 	statePayload := map[string]any{
 		"devices": map[string]any{
-			"device-1": map[string]any{"name": "Desk", "device_type": "computer"},
+			"fresh-device": map[string]any{"name": "Phone", "device_type": "smartphone"},
 		},
 		"player_state": map[string]any{
 			"play_origin": map[string]any{"device_identifier": "origin-device"},
 		},
-		"active_device_id": "device-1",
+		"active_device_id": "fresh-device",
 	}
-	first := newRegisteredConnectClientForTests(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+	stateCalls := 0
+	client := newRegisteredConnectClientForTests(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
 		switch {
+		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/stale-origin/to/stale-device"):
+			t.Fatalf("used stale persisted route")
+			return textResponse(http.StatusInternalServerError, "stale route"), nil
 		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
+			stateCalls++
 			return jsonResponse(http.StatusOK, statePayload), nil
-		default:
-			return textResponse(http.StatusOK, "ok"), nil
-		}
-	}))
-	attachConnectCacheForTests(first, cachePath)
-	if _, err := first.Playback(context.Background()); err != nil {
-		t.Fatalf("playback: %v", err)
-	}
-
-	second := newConnectClientForTests(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
-		switch {
-		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
-			t.Fatalf("unexpected state refresh")
-			return textResponse(http.StatusInternalServerError, "unexpected state refresh"), nil
-		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/origin-device/to/device-1"):
+		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/origin-device/to/fresh-device"):
 			return textResponse(http.StatusOK, "ok"), nil
 		default:
 			return textResponse(http.StatusNotFound, "missing"), nil
 		}
 	}))
-	attachConnectCacheForTests(second, cachePath)
-	if err := second.Pause(context.Background()); err != nil {
+	attachConnectCacheForTests(client, cachePath)
+	if err := client.Pause(context.Background()); err != nil {
 		t.Fatalf("pause: %v", err)
+	}
+	if stateCalls != 1 {
+		t.Fatalf("expected one state refresh, got %d", stateCalls)
 	}
 }
 

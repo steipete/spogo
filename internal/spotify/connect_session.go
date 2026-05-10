@@ -131,6 +131,9 @@ func (s *connectSession) saveCacheLocked() {
 		cached.ClientVersion = clientVer
 		cached.ConnectVersion = ""
 		cached.DeviceID = deviceID
+		cached.ActiveDeviceID = ""
+		cached.OriginDeviceID = ""
+		cached.RouteUnix = 0
 	})
 }
 
