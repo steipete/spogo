@@ -114,9 +114,6 @@ func TestConnectPlaybackCachesDirectRoute(t *testing.T) {
 		"devices": map[string]any{
 			"device-1": map[string]any{"name": "Desk", "device_type": "computer"},
 		},
-		"player_state": map[string]any{
-			"play_origin": map[string]any{"device_identifier": "origin-device"},
-		},
 		"active_device_id": "device-1",
 	}
 	stateCalls := 0
@@ -125,7 +122,7 @@ func TestConnectPlaybackCachesDirectRoute(t *testing.T) {
 		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
 			stateCalls++
 			return jsonResponse(http.StatusOK, statePayload), nil
-		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/origin-device/to/device-1"):
+		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/device/to/device-1"):
 			return textResponse(http.StatusOK, "ok"), nil
 		default:
 			return textResponse(http.StatusNotFound, "missing"), nil
@@ -150,9 +147,6 @@ func TestConnectPlaybackPersistsDirectRoute(t *testing.T) {
 		"devices": map[string]any{
 			"device-1": map[string]any{"name": "Desk", "device_type": "computer"},
 		},
-		"player_state": map[string]any{
-			"play_origin": map[string]any{"device_identifier": "origin-device"},
-		},
 		"active_device_id": "device-1",
 	}
 	first := newRegisteredConnectClientForTests(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
@@ -173,7 +167,7 @@ func TestConnectPlaybackPersistsDirectRoute(t *testing.T) {
 		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
 			t.Fatalf("unexpected state refresh")
 			return textResponse(http.StatusInternalServerError, "unexpected state refresh"), nil
-		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/origin-device/to/device-1"):
+		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/device/to/device-1"):
 			return textResponse(http.StatusOK, "ok"), nil
 		default:
 			return textResponse(http.StatusNotFound, "missing"), nil

@@ -14,7 +14,7 @@ func TestMapPlaybackStatusAndDevices(t *testing.T) {
 			"device-2": map[string]any{
 				"device_name": "Phone",
 				"device_type": "smartphone",
-				"volume":      80,
+				"volume":      32768,
 			},
 		},
 		playerState: map[string]any{
@@ -34,6 +34,17 @@ func TestMapPlaybackStatusAndDevices(t *testing.T) {
 	}
 	if status.Device.ID != "device-1" || status.Device.Name != "Desk" {
 		t.Fatalf("unexpected device: %#v", status.Device)
+	}
+	devices := mapDevices(state)
+	var phone Device
+	for _, device := range devices {
+		if device.ID == "device-2" {
+			phone = device
+			break
+		}
+	}
+	if phone.Volume != 50 {
+		t.Fatalf("expected normalized volume, got %d", phone.Volume)
 	}
 	if status.Item == nil || status.Item.URI != "spotify:track:abc" {
 		t.Fatalf("expected item")

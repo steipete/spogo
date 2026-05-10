@@ -106,6 +106,9 @@ func (s *connectSession) loadCacheLocked() {
 	if cached.DeviceID != "" {
 		s.deviceID = cached.DeviceID
 	}
+	if cached.ConnectDeviceID != "" {
+		s.connectDeviceID = cached.ConnectDeviceID
+	}
 }
 
 func (s *connectSession) saveCacheLocked() {
@@ -121,6 +124,7 @@ func (s *connectSession) saveCacheLocked() {
 	clientTokenT := s.clientTokenT
 	clientVer := s.clientVer
 	deviceID := s.deviceID
+	connectDeviceID := s.connectDeviceID
 	_ = s.cache.update(func(cached *connectCache) {
 		cached.AccessToken = token.AccessToken
 		cached.AccessTokenExpiresUnix = unixOrZero(token.ExpiresAt)
@@ -131,6 +135,7 @@ func (s *connectSession) saveCacheLocked() {
 		cached.ClientVersion = clientVer
 		cached.ConnectVersion = ""
 		cached.DeviceID = deviceID
+		cached.ConnectDeviceID = connectDeviceID
 		cached.ActiveDeviceID = ""
 		cached.OriginDeviceID = ""
 		cached.RouteUnix = 0

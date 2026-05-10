@@ -26,6 +26,7 @@ type connectCache struct {
 	ClientVersion          string `json:"client_version,omitempty"`
 	ConnectVersion         string `json:"connect_version,omitempty"`
 	DeviceID               string `json:"device_id,omitempty"`
+	ConnectDeviceID        string `json:"connect_device_id,omitempty"`
 
 	ActiveDeviceID string `json:"active_device_id,omitempty"`
 	OriginDeviceID string `json:"origin_device_id,omitempty"`
@@ -117,7 +118,11 @@ func (c *ConnectClient) cacheCommandRoute(state connectState) {
 	if c.cache != nil {
 		active := state.activeDeviceID
 		origin := state.originDeviceID
+		c.session.mu.Lock()
+		connectDeviceID := c.session.connectDeviceID
+		c.session.mu.Unlock()
 		_ = c.cache.update(func(cache *connectCache) {
+			cache.ConnectDeviceID = connectDeviceID
 			cache.ActiveDeviceID = active
 			cache.OriginDeviceID = origin
 			cache.RouteUnix = now.Unix()
@@ -148,6 +153,13 @@ func (c *ConnectClient) commandRoute() (string, string, bool) {
 	c.cachedOriginDeviceID = cached.OriginDeviceID
 	c.cachedRouteAt = routeAt
 	c.routeMu.Unlock()
+	if cached.ConnectDeviceID != "" {
+		c.session.mu.Lock()
+		if c.session.connectDeviceID == "" {
+			c.session.connectDeviceID = cached.ConnectDeviceID
+		}
+		c.session.mu.Unlock()
+	}
 	return c.memoryCommandRoute()
 }
 

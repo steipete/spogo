@@ -119,6 +119,7 @@ func (c *ConnectClient) ensureConnectDevice(ctx context.Context, auth connectAut
 	c.session.mu.Lock()
 	c.session.connectionID = connectionID
 	c.session.registeredAt = time.Now()
+	c.session.saveCacheLocked()
 	c.session.mu.Unlock()
 	return nil
 }

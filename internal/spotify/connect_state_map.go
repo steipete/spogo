@@ -28,9 +28,17 @@ func mapDevices(state connectState) []Device {
 		if device.Volume == 0 {
 			device.Volume = getInt(deviceMap, "volume_percent")
 		}
+		device.Volume = normalizeConnectVolume(device.Volume)
 		devices = append(devices, device)
 	}
 	return devices
+}
+
+func normalizeConnectVolume(volume int) int {
+	if volume <= 100 {
+		return volume
+	}
+	return clampVolume(int(float64(volume)*100/65535 + 0.5))
 }
 
 func mapPlaybackStatus(state connectState) PlaybackStatus {
