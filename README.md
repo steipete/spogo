@@ -124,6 +124,7 @@ printf '%s\n%s\n' "sp_dc=..." "sp_t=..." | spogo auth paste --no-input
 ## Connect engine notes
 
 - `connect` uses Spotify's internal connect-state endpoints for playback control.
+- Auth/session data and the last active playback route are cached per profile so repeated playback commands avoid a full Connect state refresh when the route is still valid.
 - Search/info prefer the internal GraphQL API and fall back to web search if hashes can’t be resolved.
 
 ## Web engine notes

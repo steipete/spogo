@@ -125,7 +125,7 @@ spogo [global flags] <command> [args]
 ## Engines
 
 - `auto`: connect first; fall back to web for unsupported features or rate limits.
-- `connect`: internal connect-state endpoints for playback; GraphQL for search/info.
+- `connect`: internal connect-state endpoints for playback; GraphQL for search/info. Auth/session data and the last active playback route are cached per profile.
 - `web`: Web API endpoints; search/info/playback auto-fallback to connect when rate limited.
 
 ## Exit codes

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve Connect playback latency by caching web auth, client tokens, and the active command route between invocations (`#25`, thanks @kk-spartans)
+
 ## 0.3.1 - 2026-05-10
 
 - Fix Connect Pathfinder track metadata extraction for explicit ratings, nested durations, and playability (`#26`, thanks @theDimZone)
