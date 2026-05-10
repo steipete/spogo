@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -105,6 +106,121 @@ func TestConnectPlaybackCommands(t *testing.T) {
 	}
 	if err := client.Transfer(context.Background(), "device-1"); err != nil {
 		t.Fatalf("transfer: %v", err)
+	}
+}
+
+func TestConnectPlaybackCachesDirectRoute(t *testing.T) {
+	statePayload := map[string]any{
+		"devices": map[string]any{
+			"device-1": map[string]any{"name": "Desk", "device_type": "computer"},
+		},
+		"player_state": map[string]any{
+			"play_origin": map[string]any{"device_identifier": "origin-device"},
+		},
+		"active_device_id": "device-1",
+	}
+	stateCalls := 0
+	transport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
+			stateCalls++
+			return jsonResponse(http.StatusOK, statePayload), nil
+		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/origin-device/to/device-1"):
+			return textResponse(http.StatusOK, "ok"), nil
+		default:
+			return textResponse(http.StatusNotFound, "missing"), nil
+		}
+	})
+	client := newRegisteredConnectClientForTests(transport)
+
+	if _, err := client.Playback(context.Background()); err != nil {
+		t.Fatalf("playback: %v", err)
+	}
+	if err := client.Pause(context.Background()); err != nil {
+		t.Fatalf("pause: %v", err)
+	}
+	if stateCalls != 1 {
+		t.Fatalf("expected one state call, got %d", stateCalls)
+	}
+}
+
+func TestConnectPlaybackPersistsDirectRoute(t *testing.T) {
+	cachePath := filepath.Join(t.TempDir(), "cache.json")
+	statePayload := map[string]any{
+		"devices": map[string]any{
+			"device-1": map[string]any{"name": "Desk", "device_type": "computer"},
+		},
+		"player_state": map[string]any{
+			"play_origin": map[string]any{"device_identifier": "origin-device"},
+		},
+		"active_device_id": "device-1",
+	}
+	first := newRegisteredConnectClientForTests(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
+			return jsonResponse(http.StatusOK, statePayload), nil
+		default:
+			return textResponse(http.StatusOK, "ok"), nil
+		}
+	}))
+	attachConnectCacheForTests(first, cachePath)
+	if _, err := first.Playback(context.Background()); err != nil {
+		t.Fatalf("playback: %v", err)
+	}
+
+	second := newConnectClientForTests(roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
+			t.Fatalf("unexpected state refresh")
+			return textResponse(http.StatusInternalServerError, "unexpected state refresh"), nil
+		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/origin-device/to/device-1"):
+			return textResponse(http.StatusOK, "ok"), nil
+		default:
+			return textResponse(http.StatusNotFound, "missing"), nil
+		}
+	}))
+	attachConnectCacheForTests(second, cachePath)
+	if err := second.Pause(context.Background()); err != nil {
+		t.Fatalf("pause: %v", err)
+	}
+}
+
+func TestConnectPlaybackStaleRouteFallsBackToState(t *testing.T) {
+	statePayload := map[string]any{
+		"devices": map[string]any{
+			"fresh-device": map[string]any{"name": "Desk", "device_type": "computer"},
+		},
+		"player_state": map[string]any{
+			"play_origin": map[string]any{"device_identifier": "origin-device"},
+		},
+		"active_device_id": "fresh-device",
+	}
+	sawStaleRoute := false
+	sawFreshRoute := false
+	transport := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		switch {
+		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/stale-origin/to/stale-device"):
+			sawStaleRoute = true
+			return textResponse(http.StatusGone, "gone"), nil
+		case req.Method == http.MethodPut && strings.Contains(req.URL.Path, "/devices/hobs_"):
+			return jsonResponse(http.StatusOK, statePayload), nil
+		case req.Method == http.MethodPost && strings.Contains(req.URL.Path, "/player/command/from/origin-device/to/fresh-device"):
+			sawFreshRoute = true
+			return textResponse(http.StatusOK, "ok"), nil
+		default:
+			return textResponse(http.StatusNotFound, "missing"), nil
+		}
+	})
+	client := newRegisteredConnectClientForTests(transport)
+	client.cachedActiveDeviceID = "stale-device"
+	client.cachedOriginDeviceID = "stale-origin"
+	client.cachedRouteAt = time.Now()
+
+	if err := client.Pause(context.Background()); err != nil {
+		t.Fatalf("pause: %v", err)
+	}
+	if !sawStaleRoute || !sawFreshRoute {
+		t.Fatalf("expected stale and fresh routes, stale=%t fresh=%t", sawStaleRoute, sawFreshRoute)
 	}
 }
 

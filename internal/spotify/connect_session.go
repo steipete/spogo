@@ -23,8 +23,10 @@ import (
 type connectSession struct {
 	source cookies.Source
 	client *http.Client
+	cache  *connectCacheStore
 
-	mu sync.Mutex
+	mu          sync.Mutex
+	cacheLoaded bool
 
 	token        Token
 	clientToken  string
@@ -50,6 +52,7 @@ type connectAuth struct {
 func (s *connectSession) auth(ctx context.Context) (connectAuth, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	s.loadCacheLocked()
 	if err := s.ensureTokenLocked(ctx); err != nil {
 		return connectAuth{}, err
 	}
@@ -68,6 +71,72 @@ func (s *connectSession) auth(ctx context.Context) (connectAuth, error) {
 	}, nil
 }
 
+func (s *connectSession) loadCacheLocked() {
+	if s == nil || s.cacheLoaded {
+		return
+	}
+	s.cacheLoaded = true
+	if s.cache == nil {
+		return
+	}
+	cached, err := s.cache.load()
+	if err != nil {
+		return
+	}
+	if cached.AccessToken != "" && cached.AccessTokenExpiresUnix > 0 {
+		s.token = Token{
+			AccessToken: cached.AccessToken,
+			ExpiresAt:   time.Unix(cached.AccessTokenExpiresUnix, 0),
+			Anonymous:   cached.Anonymous,
+			ClientID:    cached.ClientID,
+		}
+	}
+	if cached.ClientID != "" {
+		s.clientID = cached.ClientID
+	}
+	if cached.ClientToken != "" {
+		s.clientToken = cached.ClientToken
+	}
+	if cached.ClientTokenExpiresUnix > 0 {
+		s.clientTokenT = time.Unix(cached.ClientTokenExpiresUnix, 0)
+	}
+	if cached.ClientVersion != "" {
+		s.clientVer = cached.ClientVersion
+	}
+	if cached.DeviceID != "" {
+		s.deviceID = cached.DeviceID
+	}
+}
+
+func (s *connectSession) saveCacheLocked() {
+	if s == nil || s.cache == nil {
+		return
+	}
+	token := s.token
+	clientID := s.clientID
+	if clientID == "" {
+		clientID = token.ClientID
+	}
+	clientToken := s.clientToken
+	clientTokenT := s.clientTokenT
+	clientVer := s.clientVer
+	deviceID := s.deviceID
+	_ = s.cache.update(func(cached *connectCache) {
+		cached.AccessToken = token.AccessToken
+		cached.AccessTokenExpiresUnix = unixOrZero(token.ExpiresAt)
+		cached.Anonymous = token.Anonymous
+		cached.ClientID = clientID
+		cached.ClientToken = clientToken
+		cached.ClientTokenExpiresUnix = unixOrZero(clientTokenT)
+		cached.ClientVersion = clientVer
+		cached.ConnectVersion = ""
+		cached.DeviceID = deviceID
+		cached.ActiveDeviceID = ""
+		cached.OriginDeviceID = ""
+		cached.RouteUnix = 0
+	})
+}
+
 func (s *connectSession) ensureTokenLocked(ctx context.Context) error {
 	if s.token.AccessToken != "" && time.Until(s.token.ExpiresAt) > time.Minute {
 		return nil
@@ -81,10 +150,12 @@ func (s *connectSession) ensureTokenLocked(ctx context.Context) error {
 	if token.ClientID != "" {
 		s.clientID = token.ClientID
 	}
+	s.saveCacheLocked()
 	return nil
 }
 
 func (s *connectSession) ensureAppConfigLocked(ctx context.Context) error {
+	s.connectVer = connectClientVersion()
 	if s.clientVer != "" && s.deviceID != "" {
 		return nil
 	}
@@ -148,8 +219,8 @@ func (s *connectSession) ensureAppConfigLocked(ctx context.Context) error {
 		clientVer = clientVer[:idx]
 	}
 	s.clientVer = clientVer
-	s.connectVer = connectClientVersion()
 	s.deviceID = deviceID
+	s.saveCacheLocked()
 	return nil
 }
 
@@ -221,6 +292,7 @@ func (s *connectSession) ensureClientTokenLocked(ctx context.Context) error {
 	} else {
 		s.clientTokenT = time.Now().Add(30 * time.Minute)
 	}
+	s.saveCacheLocked()
 	return nil
 }
 

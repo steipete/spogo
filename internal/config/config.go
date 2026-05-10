@@ -128,6 +128,17 @@ func CookiePath(configPath, profile string) string {
 	return filepath.Join(base, "cookies", profile+".json")
 }
 
+func CachePath(configPath, profile string) string {
+	if profile == "" {
+		profile = DefaultProfile
+	}
+	if configPath == "" {
+		return ""
+	}
+	base := filepath.Dir(configPath)
+	return filepath.Join(base, "cache", profile+".json")
+}
+
 func (c *Config) normalize() {
 	if c.DefaultProfile == "" {
 		c.DefaultProfile = DefaultProfile

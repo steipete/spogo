@@ -62,6 +62,9 @@ func saveCookies(ctx *app.Context, path string, cookiesList []*http.Cookie, prof
 	if err := ctx.SaveProfile(profileCfg); err != nil {
 		return err
 	}
+	if err := ctx.ClearCache(); err != nil {
+		return err
+	}
 	human := []string{fmt.Sprintf("Saved %d cookies to %s", len(cookiesList), path)}
 	plain := []string{fmt.Sprintf("%d\t%s", len(cookiesList), path)}
 	payload := map[string]any{"cookie_count": len(cookiesList), "path": path}

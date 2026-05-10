@@ -71,6 +71,22 @@ func TestCookiePathEmptyConfig(t *testing.T) {
 	}
 }
 
+func TestCachePath(t *testing.T) {
+	path := CachePath("/tmp/spogo/config.toml", "default")
+	if filepath.Base(path) != "default.json" {
+		t.Fatalf("cache path: %s", path)
+	}
+	if filepath.Base(filepath.Dir(path)) != "cache" {
+		t.Fatalf("cache dir: %s", path)
+	}
+}
+
+func TestCachePathEmptyConfig(t *testing.T) {
+	if CachePath("", "default") != "" {
+		t.Fatalf("expected empty")
+	}
+}
+
 func TestLoadInvalid(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "bad.toml")

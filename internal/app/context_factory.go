@@ -90,11 +90,12 @@ func (c *Context) newAppleScriptClient(source cookies.Source) (spotify.API, erro
 
 func (c *Context) newConnectClient(source cookies.Source) (*spotify.ConnectClient, error) {
 	return spotify.NewConnectClient(spotify.ConnectOptions{
-		Source:   source,
-		Market:   c.Profile.Market,
-		Language: c.Profile.Language,
-		Device:   c.Profile.Device,
-		Timeout:  c.Settings.Timeout,
+		Source:    source,
+		Market:    c.Profile.Market,
+		Language:  c.Profile.Language,
+		Device:    c.Profile.Device,
+		Timeout:   c.Settings.Timeout,
+		CachePath: c.ResolveCachePath(),
 	})
 }
 
