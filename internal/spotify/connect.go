@@ -225,6 +225,27 @@ func (c *ConnectClient) RemoveTracks(ctx context.Context, playlistID string, uri
 	})
 }
 
+func (c *ConnectClient) GetUsersTopTracks(ctx context.Context, timeRange string, limit, offset int) (TopTracksResult, error) {
+	return withWebResult(c, func(web *Client) (TopTracksResult, error) {
+		return web.GetUsersTopTracks(ctx, timeRange, limit, offset)
+	})
+}
+
+func (c *ConnectClient) GetRecentlyPlayed(ctx context.Context, limit int, after, before int64) (RecentlyPlayedResult, error) {
+	return withWebResult(c, func(web *Client) (RecentlyPlayedResult, error) {
+		return web.GetRecentlyPlayed(ctx, limit, after, before)
+	})
+}
+
+func withWebResult[T any](c *ConnectClient, fn func(*Client) (T, error)) (T, error) {
+	web, err := c.webClient()
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+	return fn(web)
+}
+
 func withWebCollectionFallback(c *ConnectClient, primary func() ([]Item, int, error), fallback func(*Client) ([]Item, int, error)) ([]Item, int, error) {
 	items, total, err := primary()
 	if err == nil {

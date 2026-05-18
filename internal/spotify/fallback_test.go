@@ -204,6 +204,16 @@ func (a apiStub) RemoveTracks(ctx context.Context, playlistID string, uris []str
 	return nil
 }
 
+func (a apiStub) GetUsersTopTracks(context.Context, string, int, int) (TopTracksResult, error) {
+	a.note("GetUsersTopTracks")
+	return TopTracksResult{}, nil
+}
+
+func (a apiStub) GetRecentlyPlayed(context.Context, int, int64, int64) (RecentlyPlayedResult, error) {
+	a.note("GetRecentlyPlayed")
+	return RecentlyPlayedResult{}, nil
+}
+
 func (a apiStub) note(name string) {
 	if a.calls == nil {
 		return

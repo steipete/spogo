@@ -119,6 +119,21 @@ Saved tracks, albums, followed artists, owned/followed playlists. See [Library](
 | `spogo library artists unfollow <id|url...>` | Unfollow artists. |
 | `spogo library playlists list [--limit N]` | List owned/followed playlists. |
 
+## user
+
+Read-only listening data from Spotify's web endpoints.
+
+| Command | Purpose |
+| --- | --- |
+| `spogo user top-tracks [--period all-time|year|6mo|month|week|day] [--limit N] [--offset N]` | Show affinity-ranked top tracks. |
+| `spogo user history [--period all|year|6mo|1mo|1wk|1day] [--limit N] [--after <ms>] [--before <ms>]` | Show recently played tracks available from Spotify. |
+
+Spotify limitations are surfaced rather than hidden:
+
+- Top tracks are Spotify affinity rankings, not play counts.
+- Spotify only supports `long_term`, `medium_term`, and `short_term` top-track windows. `year` maps to `long_term`; `6mo` maps to `medium_term`; `month` and `week` map to `short_term` (roughly 4 weeks); `day` returns an explicit unsupported-period error.
+- Recently played is not a complete historical archive. Spotify returns retained recent plays only, at up to 50 items per page; spogo paginates backward with `before` cursors and stops at a 200-item client cap. Periods and `--after` are local lower-bound filters over the items Spotify returns.
+
 ## playlist
 
 Mutate playlists. See [Library](library.md).

@@ -102,6 +102,15 @@ spogo [global flags] <command> [args]
 - `spogo library artists unfollow <id|url...>`
 - `spogo library playlists list [--limit N]`
 
+### user
+
+- `spogo user top-tracks [--period all-time|year|6mo|month|week|day] [--limit N] [--offset N]`
+  - returns Spotify affinity-ranked tracks, not play counts
+  - Spotify supports only `long_term`, `medium_term`, `short_term`; `year` maps to `long_term`, `6mo` to `medium_term`, `month` and `week` to `short_term` (~4 weeks), and `day` errors as unsupported
+- `spogo user history [--period all|year|6mo|1mo|1wk|1day] [--limit N] [--after <ms>] [--before <ms>]`
+  - returns retained recent plays available from Spotify, not a complete listening archive
+  - paginates backward with `before` cursors; periods and `--after` are local lower-bound filters; client cap is 200 items
+
 ### playlists
 
 - `spogo playlist create <name> [--public] [--collab]`
