@@ -105,6 +105,15 @@ func (w *Writer) Errorf(format string, args ...any) {
 		return
 	}
 	msg := fmt.Sprintf(format, args...)
+	if w.Format == FormatJSON {
+		data, err := json.Marshal(map[string]string{"error": msg})
+		if err != nil {
+			_, _ = fmt.Fprintln(w.Err, msg)
+			return
+		}
+		_, _ = fmt.Fprintln(w.Err, string(data))
+		return
+	}
 	if w.Color {
 		msg = w.Theme.Error(msg)
 	}

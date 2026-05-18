@@ -121,3 +121,31 @@ func TestErrorfNilWriter(t *testing.T) {
 	var w *Writer
 	w.Errorf("oops")
 }
+
+func TestErrorfJSON(t *testing.T) {
+	errOut := &bytes.Buffer{}
+	w, err := New(Options{Format: FormatJSON, Out: &bytes.Buffer{}, Err: errOut})
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	w.Errorf("something went wrong: %d", 42)
+	got := strings.TrimSpace(errOut.String())
+	want := `{"error":"something went wrong: 42"}`
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestErrorfJSONWithColor(t *testing.T) {
+	errOut := &bytes.Buffer{}
+	w, err := New(Options{Format: FormatJSON, Out: &bytes.Buffer{}, Err: errOut, Color: true})
+	if err != nil {
+		t.Fatalf("new: %v", err)
+	}
+	w.Errorf("oops %d", 99)
+	got := strings.TrimSpace(errOut.String())
+	want := `{"error":"oops 99"}`
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}

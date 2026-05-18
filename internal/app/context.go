@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -26,6 +27,8 @@ type Settings struct {
 	Verbose    bool
 	Debug      bool
 	NoInput    bool
+	Out        io.Writer
+	Err        io.Writer
 }
 
 type Context struct {

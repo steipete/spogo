@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/steipete/spogo/internal/app"
 	"github.com/steipete/spogo/internal/cli"
+	"github.com/steipete/spogo/internal/output"
 )
 
 var exitFunc = os.Exit
@@ -48,14 +50,21 @@ func run(args []string, out io.Writer, errOut io.Writer) int {
 		_, _ = fmt.Fprintln(errOut, err)
 		return 2
 	}
+	settings.Out = out
+	settings.Err = errOut
 	ctx, err := app.NewContext(settings)
 	if err != nil {
-		_, _ = fmt.Fprintln(errOut, err)
+		if settings.Format == output.FormatJSON {
+			b, _ := json.Marshal(map[string]string{"error": err.Error()})
+			_, _ = fmt.Fprintln(errOut, string(b))
+		} else {
+			_, _ = fmt.Fprintln(errOut, err)
+		}
 		return 1
 	}
 	ctx.SetCommandContext(context.Background())
 	if err := ctx.ValidateProfile(); err != nil {
-		_, _ = fmt.Fprintln(errOut, err)
+		ctx.Output.Errorf("%v", err)
 		return 2
 	}
 	if err := kctx.Run(ctx); err != nil {

@@ -34,5 +34,7 @@ func newOutputWriter(settings Settings) (*output.Writer, error) {
 		Format: format,
 		Color:  isColorEnabled(format, settings.NoColor),
 		Quiet:  settings.Quiet,
+		Out:    settings.Out,
+		Err:    settings.Err,
 	})
 }

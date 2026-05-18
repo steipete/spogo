@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/steipete/spogo/internal/cookies"
@@ -96,6 +98,26 @@ func TestNormalizeArgsMovesNoInput(t *testing.T) {
 	want := []string{"--no-input", "auth", "paste", "--cookie-path", "cookies.json"}
 	if fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Fatalf("got %v, want %v", got, want)
+	}
+}
+
+func TestRunJSONUserTopTracksDayError(t *testing.T) {
+	out := &bytes.Buffer{}
+	errOut := &bytes.Buffer{}
+	code := run([]string{"--json", "user", "top-tracks", "--period", "day"}, out, errOut)
+	if code != 1 {
+		t.Fatalf("expected exit code 1, got %d; stdout=%q stderr=%q", code, out.String(), errOut.String())
+	}
+	if out.Len() != 0 {
+		t.Fatalf("expected empty stdout, got %q", out.String())
+	}
+	stripped := strings.TrimSpace(errOut.String())
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(stripped), &parsed); err != nil {
+		t.Fatalf("stderr is not valid JSON: %v; got %q", err, stripped)
+	}
+	if _, ok := parsed["error"]; !ok {
+		t.Fatalf("stderr JSON missing 'error' key: %q", stripped)
 	}
 }
 
